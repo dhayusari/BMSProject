@@ -140,6 +140,7 @@ class Voltages(QMainWindow):
     
     def change_input(self, checked):
         while checked:
+            self.laptop_btn.setChecked(False)
             self.controller.read_data()
     
     def stop_read(self, checked):
