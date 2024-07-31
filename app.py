@@ -122,7 +122,7 @@ class Controller:
         else:
             on_off = 0
         self.model.toggle_relay(id)
-        relay = "Relay " + str(id) + ": " + str(on_off)
+        relay = "Relay" + str(id) + ":" + str(on_off)
         self.send_data(relay)
     
     def handle_change_coolant(self, id, value):
