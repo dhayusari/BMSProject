@@ -86,7 +86,7 @@ class SpinBox(QWidget):
         else:
             self.controller.handle_change_voltage(self.num, 0)
             self.spin_box.setValue(0)
-            self.temp1_btn.setText("Off")
+            self.en_button.setText("Off")
 
     def set_voltage(self):
         voltage = self.spin_box.value()
@@ -96,10 +96,9 @@ class SpinBox(QWidget):
 
 
 class TempModule(QWidget):
-    def __init__(self, num, controller, model):
+    def __init__(self, num, temp, controller):
         super().__init__()
         self.controller = controller
-        self.model = model
         self.temp_num = num
         layout = QGridLayout()
 
@@ -119,7 +118,7 @@ class TempModule(QWidget):
         self.temp.setRange(0, 150)
         self.temp.setSingleStep(1.0)
 
-        self.temp.setValue(self.model.temps[num])
+        self.temp.setValue(temp)
         # self.temp2 = QLineEdit()
         # self.temp2.setText(str(self.model.temps[module * 2 + 1]))
 
@@ -137,6 +136,7 @@ class TempModule(QWidget):
         layout.addWidget(self.temp, 0, 2)
         #layout.addWidget(self.temp2_label, 1, 1)
         #layout.addWidget(self.temp2, 1, 2)
+        layout.addWidget(self.set_btn, 0, 3)
         layout.addWidget(self.temp_btn, 0, 4)
         #layout.addWidget(self.temp2_btn, 1, 3)
 
@@ -150,7 +150,7 @@ class TempModule(QWidget):
         self.setLayout(layout)
 
         # Connect model signal to update slot
-        self.controller.model.tempChanged.connect(self.update_temps)
+        #self.controller.model.tempChanged.connect(self.update_temps)
 
     def button_enabled(self, checked):
         # enables temp to 25 C
@@ -175,9 +175,12 @@ class TempModule(QWidget):
 #             self.temp2_btn.setText("Off")
     
     def temp_changed(self):
-        self.temp_btn.setText("On")
-        new_temp = int(self.temp.text())
-        self.controller.handle_change_temp(self.temp_num , new_temp)
+        if self.temp.value() > 0:
+            self.temp_btn.setText("On")
+            new_temp = float(self.temp.text())
+            self.controller.handle_change_temp(self.temp_num , int(new_temp))
+        else:
+            print("Temp has not been changed")
     
 #     def temp2_changed(self):
 #         self.temp2_btn.setText("On")
