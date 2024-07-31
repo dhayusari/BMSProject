@@ -229,7 +229,7 @@ class Temperatures(QMainWindow):
 
         #temp values
         for i in range(50):
-            self.module = TempModule(i, self.controller, self.model)
+            self.module = TempModule(i, self.model.temps[i], self.controller)
             layout.addWidget(self.module)
 
         self.widget.setLayout(layout)
@@ -280,9 +280,3 @@ class Routines(QWidget):
         layout.addWidget(self.on_btn, 0, 3)
 
         self.setLayout(layout)
-
-
-
-
-
-
