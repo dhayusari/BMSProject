@@ -18,8 +18,9 @@ class Worker(QThread):
     def run(self):
         while self._running:
             if self.serial_port.in_waiting > 0:
-                data = self.serial_port.readline().decode('utf-8').strip()
+                data = self.serial_port.readline().decode('utf-8', errors='replace').strip()
                 self.data_received.emit(data)
+
 
     def stop(self):
         self._running = False
@@ -71,10 +72,10 @@ class Data(QObject):
 class Controller:
     def __init__(self, model):
         self.model = model
-        # self.serial_port = serial.Serial('com4', 115200, timeout=1)
-        # self.worker = Worker(self.serial_port)
-        # self.worker.data_received.connect(self.read_data)
-        # self.worker.start()
+        self.serial_port = serial.Serial('com11', 115200, timeout=1)
+        self.worker = Worker(self.serial_port)
+        self.worker.data_received.connect(self.read_data)
+        self.worker.start()
 
     def __del__(self):
         # self.worker.stop()
@@ -83,23 +84,28 @@ class Controller:
 
     def send_data(self, data):
         print("Data being sent: ", data)
-        # self.serial_port.write((data + '\n').encode('utf-8'))
+        self.serial_port.write((data + '\n').encode('utf-8'))
     
     def read_data(self, data):
         print("Reading data: ", data)
-        # pattern1 = r"pot\s([\d.]+):\s*([\d.]+)"
-        # pattern2 = r"Coolant\s([\d.]+):\s*([\d.]+)"
-        # cell_match = re.search(pattern1, data)
-        # temp_match = re.search(pattern2, data)
+        pattern1 = r"pot\s([\d.]+):\s*([\d.]+)"
+        pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
+        cell_match = re.search(pattern1, data)
+        temp_match = re.search(pattern2, data)
 
-        # if cell_match:
-        #     cell_num = int(cell_match.group(1))
-        #     cell_value = float(cell_match.group(2))
-        #     self.handle_set_voltage_range((cell_num - 1) * 8, (cell_num - 1) * 8 + 8, cell_value)
-        # if temp_match:
-        #     temp_num = int(temp_match.group(1))
-        #     temp_value = float(temp_match.group(2))
-        #     self.handle_change_coolant(temp_num, temp_value)
+        if cell_match:
+            # print("\npattern1 matched. \n")
+            cell_num = int(cell_match.group(1))
+            cell_value = float(cell_match.group(2))
+            self.handle_set_voltage_range((cell_num - 1) * 8, (cell_num - 1) * 8 + 8, cell_value)
+        if temp_match:
+            #print("\npattern2 matched. \n")
+            temp_num = int(temp_match.group(1))
+            temp_value = float(temp_match.group(2))
+            self.handle_change_coolant(temp_num, temp_value)
+        else:
+            pass
+            #print("\nDID not match. data read is: \n", data)
     
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
@@ -108,12 +114,12 @@ class Controller:
     
     def handle_change_voltage(self, cell_num, volt):
         self.model.change_voltage(cell_num, volt)
-        cell = "Cell " + str(cell_num + 1) + ": " + str(volt)
+        cell = "Cell" + str(cell_num + 1) + ":" + str(volt)
         self.send_data(cell)
     
     def handle_change_temp(self, temp_num, temp):
         self.model.change_temp(temp_num, temp)
-        cell_temp = "Temp " + str(temp_num + 1) + ": " + str(temp)
+        cell_temp = "Temp" + str(temp_num + 1) + ":" + str(temp)
         self.send_data(cell_temp)
 
     def handle_relay_toggle(self, id, state):
