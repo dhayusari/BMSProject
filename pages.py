@@ -90,15 +90,32 @@ class Voltages(QMainWindow):
         layout1.addWidget(self.label5, 9, 0)
         layout1.addWidget(self.module_volt, 9, 1)
 
-        #self.high_mod_lbl = QLabel("Highest Module Voltage")
+       #self.high_mod_lbl = QLabel("Highest Module Voltage")
         
 
-
+        layout2 = QGridLayout()
         self.cell_voltages_label = QLabel("Cell Voltages")
-        #layout2.addWidget(self.cell_voltages_label, 10,  0)
+        layout2.addWidget(self.cell_voltages_label, 0,  0)
+
+        self.high_lbl = QLabel("Highest Cell Voltage")
+        self.high_volt = QLineEdit(str(max(self.model.voltages)))
+        self.high_volt.setReadOnly(True)
+        self.low_lbl = QLabel("Lowest Cell Voltage")
+        self.low_volt = QLineEdit(str(min(self.model.voltages)))
+        self.low_volt.setReadOnly(True)
+        self.avg_lbl = QLabel("Average Cell Voltage")
+        self.avg_volt =QLineEdit(str(sum(self.model.voltages) / len(self.model.voltages)))
+        self.avg_volt.setReadOnly(True)
+
+        layout2.addWidget(self.high_lbl, 1, 0)
+        layout2.addWidget(self.high_volt, 1, 1)
+        layout2.addWidget(self.low_lbl, 2, 0)
+        layout2.addWidget(self.low_volt, 2, 1)
+        layout2.addWidget(self.avg_lbl, 3, 0)
+        layout2.addWidget(self.avg_volt, 3, 1)
 
         layout.addLayout(layout1)
-        #layout.addLayout(layout2)
+        layout.addLayout(layout2)
 
         layout3 = QVBoxLayout()
         for i in range(200):
@@ -178,21 +195,24 @@ class Temperatures(QMainWindow):
         self.module_label = QLabel("Module Temperatures")
         self.min_temp_lbl = QLabel("Min. Temperature")
         min_temp = min(self.model.temps)
-        self.min_temp = QLabel(str(min_temp))
-        #self.min_temp.setReadOnly(True)
+        self.min_temp = QLineEdit(str(min_temp))
+        self.min_temp.setReadOnly(True)
         self.temp_loc_lbl = QLabel("Cell Location")
         min_temp_loc = self.model.temps.index(min_temp)
-        self.min_temp_loc = QLabel(str(min_temp_loc + 1))
+        self.min_temp_loc = QLineEdit(str(min_temp_loc + 1))
+        self.min_temp_loc.setReadOnly(True)
         self.max_temp_lbl = QLabel("Max. Temperature")
         max_temp = max(self.model.temps)
-        self.max_temp = QLabel(str(max_temp))
+        self.max_temp = QLineEdit(str(max_temp))
+        self.max_temp.setReadOnly(True)
         self.max_loc_lbl = QLabel("Cell Location")
         max_temp_loc = self.model.temps.index(max_temp)
-        self.max_temp_loc = QLabel(str(max_temp_loc + 1))
-        #self.max_temp.setReadOnly(True)
+        self.max_temp_loc = QLineEdit(str(max_temp_loc + 1))
+        self.max_temp.setReadOnly(True)
         self.avg_temp_lbl = QLabel("Average Temperature")
         avg_temp = sum(self.model.temps)/len(self.model.temps)
-        self.avg_temp = QLabel(str(avg_temp))
+        self.avg_temp = QLineEdit(str(avg_temp))
+        self.avg_temp.setReadOnly(True)
 
         layout1.addWidget(self.module_label, 3, 0)
         layout1.addWidget(self.min_temp_lbl, 4, 0)
@@ -208,7 +228,7 @@ class Temperatures(QMainWindow):
         layout.addLayout(layout1)
 
         #temp values
-        for i in range(25):
+        for i in range(50):
             self.module = TempModule(i, self.controller, self.model)
             layout.addWidget(self.module)
 

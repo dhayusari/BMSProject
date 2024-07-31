@@ -27,12 +27,13 @@ class Worker(QThread):
 
 class Data(QObject):
     voltageChanged = pyqtSignal(int, float)
-    tempChanged = pyqtSignal(int, int)
+    tempChanged = pyqtSignal(int)
     relayToggled = pyqtSignal(int, bool)
 
     def __init__(self):
         super().__init__()
         self.voltages = [0.0] * 200
+        
         self.temps = [0] * 50
         self.relays = [0] * 5
         self.coolant = [0] * 2
@@ -54,7 +55,7 @@ class Data(QObject):
     def change_temp(self, temp_num, temp):
         print("Changed Temp Number: ", temp_num + 1)
         self.temps[temp_num] = temp
-        self.tempChanged.emit(temp_num, temp)
+        self.tempChanged.emit(temp)
     
     def toggle_relay(self, id):
         print("Relay toggled!")
@@ -70,34 +71,35 @@ class Data(QObject):
 class Controller:
     def __init__(self, model):
         self.model = model
-        self.serial_port = serial.Serial('com4', 115200, timeout=1)
-        self.worker = Worker(self.serial_port)
-        self.worker.data_received.connect(self.read_data)
-        self.worker.start()
+        # self.serial_port = serial.Serial('com4', 115200, timeout=1)
+        # self.worker = Worker(self.serial_port)
+        # self.worker.data_received.connect(self.read_data)
+        # self.worker.start()
 
     def __del__(self):
-        self.worker.stop()
-        self.serial_port.close()
+        # self.worker.stop()
+        print("Worker has stopped")
+        # self.serial_port.close()
 
     def send_data(self, data):
         print("Data being sent: ", data)
-        self.serial_port.write((data + '\n').encode('utf-8'))
+        # self.serial_port.write((data + '\n').encode('utf-8'))
     
     def read_data(self, data):
         print("Reading data: ", data)
-        pattern1 = r"pot\s([\d.]+):\s*([\d.]+)"
-        pattern2 = r"Coolant\s([\d.]+):\s*([\d.]+)"
-        cell_match = re.search(pattern1, data)
-        temp_match = re.search(pattern2, data)
+        # pattern1 = r"pot\s([\d.]+):\s*([\d.]+)"
+        # pattern2 = r"Coolant\s([\d.]+):\s*([\d.]+)"
+        # cell_match = re.search(pattern1, data)
+        # temp_match = re.search(pattern2, data)
 
-        if cell_match:
-            cell_num = int(cell_match.group(1))
-            cell_value = float(cell_match.group(2))
-            self.handle_set_voltage_range((cell_num - 1) * 8, (cell_num - 1) * 8 + 8, cell_value)
-        if temp_match:
-            temp_num = int(temp_match.group(1))
-            temp_value = float(temp_match.group(2))
-            self.handle_change_coolant(temp_num, temp_value)
+        # if cell_match:
+        #     cell_num = int(cell_match.group(1))
+        #     cell_value = float(cell_match.group(2))
+        #     self.handle_set_voltage_range((cell_num - 1) * 8, (cell_num - 1) * 8 + 8, cell_value)
+        # if temp_match:
+        #     temp_num = int(temp_match.group(1))
+        #     temp_value = float(temp_match.group(2))
+        #     self.handle_change_coolant(temp_num, temp_value)
     
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)

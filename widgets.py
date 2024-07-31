@@ -85,7 +85,7 @@ class SpinBox(QWidget):
             self.en_button.setText("On")
         else:
             self.controller.handle_change_voltage(self.num, 0)
-            self.spin_box.setVallue(0)
+            self.spin_box.setValue(0)
             self.temp1_btn.setText("Off")
 
     def set_voltage(self):
@@ -96,92 +96,102 @@ class SpinBox(QWidget):
 
 
 class TempModule(QWidget):
-    def __init__(self, module, controller, model):
+    def __init__(self, num, controller, model):
         super().__init__()
         self.controller = controller
         self.model = model
-        self.module_num = module
+        self.temp_num = num
         layout = QGridLayout()
 
-        module_name = "Module " + str(module + 1)
-        self.module_label = QLabel(module_name)
-        temp1_name = "Temp " + str((module + 1) * 2 - 1) + ":"
-        temp2_name = "Temp " + str((module + 1) * 2) + ":"
-        self.temp1_label = QLabel(temp1_name)
-        self.temp2_label = QLabel(temp2_name)
+        if num % 2 == 0:
+            module_name = "Module " + str(int(num / 2 + 1))
+            self.module_label = QLabel(module_name)
+            layout.addWidget(self.module_label, 0 , 0)
+        else:
+            self.empty_lbl = QLabel("      ")
+            layout.addWidget(self.empty_lbl, 0, 0)
 
-        self.temp1 = QLineEdit()
-        self.temp1.setText(str(self.model.temps[module * 2]))
-        self.temp2 = QLineEdit()
-        self.temp2.setText(str(self.model.temps[module * 2 + 1]))
+        temp_name = "Temp " + str(num + 1) + ":"
+        self.temp_label = QLabel(temp_name)
+        #self.temp2_label = QLabel(temp2_name)
 
-        self.temp1_btn = QPushButton(text="Off")
-        self.temp1_btn.setCheckable(True)
+        self.temp = QDoubleSpinBox()
+        self.temp.setRange(0, 150)
+        self.temp.setSingleStep(1.0)
+
+        self.temp.setValue(self.model.temps[num])
+        # self.temp2 = QLineEdit()
+        # self.temp2.setText(str(self.model.temps[module * 2 + 1]))
+
+        self.temp_btn = QPushButton(text="Off")
+        self.temp_btn.setCheckable(True)
+
+        self.set_btn = QPushButton(text="Set")
         
-        self.temp2_btn = QPushButton(text="Off")
-        self.temp2_btn.setCheckable(True)
-        self.temp2_btn.clicked.connect(self.button2_enabled)
+        # self.temp2_btn = QPushButton(text="Off")
+        # self.temp2_btn.setCheckable(True)
+        # self.temp2_btn.clicked.connect(self.button2_enabled)
 
-        layout.addWidget(self.module_label, 0, 0)
-        layout.addWidget(self.temp1_label, 0, 1)
-        layout.addWidget(self.temp1, 0, 2)
-        layout.addWidget(self.temp2_label, 1, 1)
-        layout.addWidget(self.temp2, 1, 2)
-        layout.addWidget(self.temp1_btn, 0, 3)
-        layout.addWidget(self.temp2_btn, 1, 3)
+        #layout.addWidget(self.module_label, 0, 0)
+        layout.addWidget(self.temp_label, 0, 1)
+        layout.addWidget(self.temp, 0, 2)
+        #layout.addWidget(self.temp2_label, 1, 1)
+        #layout.addWidget(self.temp2, 1, 2)
+        layout.addWidget(self.temp_btn, 0, 4)
+        #layout.addWidget(self.temp2_btn, 1, 3)
 
         # Behaviour handling
-        self.temp1.textChanged.connect(self.temp1_changed)
-        self.temp2.textChanged.connect(self.temp2_changed)
-        self.temp1_btn.clicked.connect(self.button1_enabled)
-        self.temp2_btn.clicked.connect(self.button2_enabled)
+        #self.temp.textChanged.connect(self.temp_changed)
+        #self.temp2.textChanged.connect(self.temp2_changed)
+        self.set_btn.clicked.connect(self.temp_changed)
+        self.temp_btn.clicked.connect(self.button_enabled)
+        #self.temp2_btn.clicked.connect(self.button2_enabled)
 
         self.setLayout(layout)
 
         # Connect model signal to update slot
         self.controller.model.tempChanged.connect(self.update_temps)
 
-    def button1_enabled(self, checked):
+    def button_enabled(self, checked):
         # enables temp to 25 C
         if checked:
-            self.controller.handle_change_temp(self.module_num * 2, 25)
-            self.temp1.setText("25")
-            self.temp1_btn.setText("On")
+            self.controller.handle_change_temp(self.temp_num, 25)
+            self.temp.setValue(25)
+            self.temp_btn.setText("On")
         else:
-            self.controller.handle_change_temp(self.module_num * 2, 0)
-            self.temp1.setText("0")
-            self.temp1_btn.setText("Off")
+            self.controller.handle_change_temp(self.temp_num, 0)
+            self.temp.setValue(0)
+            self.temp_btn.setText("Off")
 
-    def button2_enabled(self, checked):
-        # enables temp to 25 C
-        if checked:
-            self.controller.handle_change_temp(self.module_num * 2 + 1, 25)
-            self.temp2.setText("25")
-            self.temp2_btn.setText("On")
-        else:
-            self.controller.handle_change_temp(self.module_num * 2 + 1, 0)
-            self.temp2.setText("0")
-            self.temp2_btn.setText("Off")
+#     def button2_enabled(self, checked):
+#         # enables temp to 25 C
+#         if checked:
+#             self.controller.handle_change_temp(self.module_num * 2 + 1, 25)
+#             self.temp2.setText("25")
+#             self.temp2_btn.setText("On")
+#         else:
+#             self.controller.handle_change_temp(self.module_num * 2 + 1, 0)
+#             self.temp2.setText("0")
+#             self.temp2_btn.setText("Off")
     
-    def temp1_changed(self):
-        self.temp1_btn.setText("On")
-        new_temp = int(self.temp1.text())
-        self.controller.handle_change_temp(self.module_num * 2 , new_temp)
+    def temp_changed(self):
+        self.temp_btn.setText("On")
+        new_temp = int(self.temp.text())
+        self.controller.handle_change_temp(self.temp_num , new_temp)
     
-    def temp2_changed(self):
-        self.temp2_btn.setText("On")
-        new_temp = int(self.temp2.text())
-        self.controller.handle_change_temp(self.module_num * 2 + 1 , new_temp)
+#     def temp2_changed(self):
+#         self.temp2_btn.setText("On")
+#         new_temp = int(self.temp2.text())
+#         self.controller.handle_change_temp(self.module_num * 2 + 1 , new_temp)
 
-    def update_temps(self, temp_num, temp):
-        if temp_num == self.module_num * 2:
-            self.temp1.setText(str(temp))
-            self.temp1_btn.setChecked(temp >0 )
-            self.temp1_btn.setText("On" if temp > 0 else "Off")
-        elif temp_num == self.module_num * 2 + 1:
-            self.temp2.setText(str(temp))
-            self.temp2_btn.setChecked(temp >0)
-            self.temp2_btn.setText("On" if temp > 0 else "Off")
+    def update_temps(self, temp):
+        self.temp.setValue(temp)
+        self.temp_btn.setChecked(temp >0 )
+        self.temp_btn.setText("On" if temp > 0 else "Off")
+        # elif temp_num == self.module_num * 2 + 1:
+        #     self.temp2.setText(str(temp))
+        #     self.temp2_btn.setChecked(temp >0)
+        #     self.temp2_btn.setText("On" if temp > 0 else "Off")
 
 
 class Relay(QWidget):
