@@ -28,21 +28,41 @@ class Worker(QThread):
 
 class Data(QObject):
     voltageChanged = pyqtSignal(int, float)
-    tempChanged = pyqtSignal(int)
+    tempChanged = pyqtSignal(int, int)
     relayToggled = pyqtSignal(int, bool)
+    coolantChanged = pyqtSignal(int, int)
+    updateVoltages = pyqtSignal(bool)
+    updateTemps = pyqtSignal(bool)
+    pwmChanged = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
         self.voltages = [0.0] * 200
-        
+        self.module = {}
+        self.module = self.calculate_module()
         self.temps = [0] * 50
         self.relays = [0] * 5
         self.coolant = [0] * 2
+        self.pwm = 0
+    
+    def calculate_module(self):
+        for i in range(25):
+            module = i * 8
+            average = sum(self.model[module:module+8]) / 8
+            self.module[str(module + 1)] = average
+        print(self.module)
+    
+    def update_module(self, cell_num):
+        module = cell_num / 8
+        print("Module {module} Updated!")
+        average = sum(self.model[module:module+8]) / 8
+        self.module[module + 1] = average
     
     def change_voltage(self, cell_num, volt):
         print("Changed Cell Voltage:", cell_num + 1)
         self.voltages[cell_num] = volt
         self.voltageChanged.emit(cell_num, volt)
+        self.update_module(cell_num)
     
     def set_range_voltage(self, start, end, volt):
         print("Change Voltage Cell Range")
@@ -56,7 +76,7 @@ class Data(QObject):
     def change_temp(self, temp_num, temp):
         print("Changed Temp Number: ", temp_num + 1)
         self.temps[temp_num] = temp
-        self.tempChanged.emit(temp)
+        self.tempChanged.emit(temp_num, temp)
     
     def toggle_relay(self, id):
         print("Relay toggled!")
@@ -67,6 +87,11 @@ class Data(QObject):
         print("Coolant:  ", id)
         print("Temp: ", temp)
         self.coolant[id - 1]= temp
+        self.coolantChanged.emit(id, temp)
+
+    def change_pwm(self, state):
+        self.pwm = state
+        self.pwmChanged(state == 1)
 
 
 class Controller:
@@ -88,7 +113,7 @@ class Controller:
     
     def read_data(self, data):
         print("Reading data: ", data)
-        pattern1 = r"pot\s([\d.]+):\s*([\d.]+)"
+        pattern1 = r"pot([\d.]+):\s*([\d.]+)"
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
         cell_match = re.search(pattern1, data)
         temp_match = re.search(pattern2, data)
@@ -174,7 +199,7 @@ class Tabs(QWidget):
         self.tabs.addTab(self.tab1, "Voltages")
         self.tabs.addTab(self.tab2, "Temperatures")
         self.tabs.addTab(self.tab3, "Relays")
-        self.tabs.addTab(self.tab4, "Routines")
+        self.tabs.addTab(self.tab4, "DTC and Routines")
         
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)

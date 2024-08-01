@@ -84,7 +84,7 @@ class Voltages(QMainWindow):
         layout1.addWidget(self.module, 8, 1)
 
         self.label5 = QLabel("Module Voltage:")
-        self.module_volt = QLineEdit()
+        self.module_volt = QLineEdit(self.model.module['1'])
         self.module_volt.setReadOnly(True)
         self.module.currentIndexChanged.connect(self.module_voltage)
         layout1.addWidget(self.label5, 9, 0)
@@ -143,17 +143,10 @@ class Voltages(QMainWindow):
             self.error_range_lbl.setText(" ")
             self.controller.handle_set_voltage_range(self.start, self.end, float(self.volt_edit.text()))
     
-    
     def module_voltage(self):
-        index = self.module.currentIndex()
-        voltages= [0] * 8
-        j = 0
-        for i in range(index * 8, index * 8 + 8, 1):
-            voltages[j] = self.model.voltages[i]
-        total = sum(voltages)
-        
-        print("Avg: ", total / 8)
-        self.module_volt.setText(str(total / 8))
+        index = self.module.currentIndex() + 1
+        voltage = self.model.module[str(index)]
+        self.module_volt.setText(str(voltage))
     
     def change_input(self, checked):
         while checked:
@@ -163,7 +156,6 @@ class Voltages(QMainWindow):
     def stop_read(self, checked):
         if checked:
             self.pot_btn.setChecked(False)
-
 
 class Temperatures(QMainWindow):
     def __init__(self, controller, model):
@@ -197,7 +189,7 @@ class Temperatures(QMainWindow):
         min_temp = min(self.model.temps)
         self.min_temp = QLineEdit(str(min_temp))
         self.min_temp.setReadOnly(True)
-        self.temp_loc_lbl = QLabel("Cell Location")
+        self.temp_loc_lbl = QLabel("Temp Location")
         min_temp_loc = self.model.temps.index(min_temp)
         self.min_temp_loc = QLineEdit(str(min_temp_loc + 1))
         self.min_temp_loc.setReadOnly(True)
@@ -205,7 +197,7 @@ class Temperatures(QMainWindow):
         max_temp = max(self.model.temps)
         self.max_temp = QLineEdit(str(max_temp))
         self.max_temp.setReadOnly(True)
-        self.max_loc_lbl = QLabel("Cell Location")
+        self.max_loc_lbl = QLabel("Temp Location")
         max_temp_loc = self.model.temps.index(max_temp)
         self.max_temp_loc = QLineEdit(str(max_temp_loc + 1))
         self.max_temp.setReadOnly(True)
@@ -241,6 +233,14 @@ class Temperatures(QMainWindow):
 
         self.setCentralWidget(self.scroll)
 
+         # Connect model signal to update slot
+        self.controller.model.coolantChanged.connect(self.update_coolant)
+    
+    def update_coolant(self, id, temp):
+        if id == 0:
+            self.temp1.setText(str(temp))
+        else:
+            self.temp2.setText(str(temp))
 
 class Relays(QWidget):
     def __init__(self, controller, model):
@@ -268,15 +268,23 @@ class Routines(QWidget):
         self.model = model
 
         layout = QGridLayout()
-        self.label = QLabel("Set All Voltages")
-        self.volt_edit = QLineEdit()
-        self.on_btn = QPushButton("Off")
-        self.set_btn = QPushButton("Set")
+        self.routine_label = QLabel("Input Routine")
+        self.routine = QLineEdit()
+        self.send = QPushButton("Send")
+        self.label = QLabel("PWM")
+        self.pwm_edit = QLineEdit("")
 
+        layout.addWidget(self.routine_label, 0, 0)
+        layout.addWidget(self.routine, 0, 1)
+        layout.addWidget(self.send, 0, 2)
+        layout.addWidget(self.label, 1, 0)
+        layout.addWidget(self.volt_edit, 1, 1)
 
-        layout.addWidget(self.label, 0, 0)
-        layout.addWidget(self.volt_edit, 0, 1)
-        layout.addWidget(self.set_btn, 0, 2)
-        layout.addWidget(self.on_btn, 0, 3)
-
+        self.send.clicked.connect(self.send_routine)
+        
         self.setLayout(layout)
+    
+    def send_routine(self):
+        data = "Routine " + self.routine.text()
+        self.controller.send_data(data)
+        

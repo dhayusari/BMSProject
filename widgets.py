@@ -77,6 +77,9 @@ class SpinBox(QWidget):
         self.en_button.clicked.connect(self.btn_enabled)
         self.setLayout(layout)
 
+        # Connect model signal to update slot
+        self.controller.model.voltageChanged.connect(self.update_voltage)
+
     def btn_enabled(self, checked):
         # enables volt to 3 V
         if checked:
@@ -92,6 +95,11 @@ class SpinBox(QWidget):
         voltage = self.spin_box.value()
         self.en_button.setChecked(voltage > 0)
         self.controller.handle_change_voltage(self.num, voltage)
+    
+    def update_voltage(self, cell_num, voltage):
+        if cell_num == self.cell_idx:
+            self.slider.setValue(voltage * 10)
+            self.label2.setText(f"{voltage:.2f}")
             
 
 
@@ -150,7 +158,7 @@ class TempModule(QWidget):
         self.setLayout(layout)
 
         # Connect model signal to update slot
-        #self.controller.model.tempChanged.connect(self.update_temps)
+        self.controller.model.tempChanged.connect(self.update_temps)
 
     def button_enabled(self, checked):
         # enables temp to 25 C
@@ -187,14 +195,16 @@ class TempModule(QWidget):
 #         new_temp = int(self.temp2.text())
 #         self.controller.handle_change_temp(self.module_num * 2 + 1 , new_temp)
 
-    def update_temps(self, temp):
-        self.temp.setValue(temp)
-        self.temp_btn.setChecked(temp >0 )
-        self.temp_btn.setText("On" if temp > 0 else "Off")
+    def update_temps(self, temp_num, temp):
+        if temp_num == self.temp_num:
+            self.temp.setValue(temp)
+            self.temp_btn.setChecked(temp >0 )
+            self.temp_btn.setText("On" if temp > 0 else "Off")
         # elif temp_num == self.module_num * 2 + 1:
         #     self.temp2.setText(str(temp))
         #     self.temp2_btn.setChecked(temp >0)
         #     self.temp2_btn.setText("On" if temp > 0 else "Off")
+    
 
 
 class Relay(QWidget):
