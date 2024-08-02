@@ -63,6 +63,7 @@ int bufferIndex = 0; // Current index in the temporary buffer
 double cellVoltages[MAX_CELLS] = {0}; // Assuming a maximum of 10 cells
 double tempValues[MAX_TEMPS] = {0};
 float min_cell, max_cell, min_temp, max_temp;
+int pri_current, pri_current_fa, sec_current;
 int string;
 
 char received_char;
@@ -133,16 +134,19 @@ void process_message(void) {
 				max_temp = value;
 				sprintf(buffer, "Updated max_temp %lf\n", value);
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-
-        } else if (sscanf(token, "0314_%d\n", &value) == 1) {
+        } else if (sscanf(token, "$0314_%d\n", &value) == 1) {
             	string = value;
             	P1C01_flag = 0;
             	P1C00_flag = 0;
             	P0A7E_flag = 0;
-            	P0CA7_flag = 0;
-            	sprintf(buffer, "P1C01, P0A7E, P0CA7, and P1C00 flag reset manually\n");
+            	sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
             	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-        } else {
+        } else if (sscanf(token, "$0321_%d\n", &value) == 1) {
+        		string = value;
+        		P0CA7_flag = 0;
+        		sprintf(buffer, "P0CA7 flag reset manually\n");
+        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+        }else {
             	sprintf(buffer, "Failed to parse token: %s\n", token);
             	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
         }
@@ -386,6 +390,46 @@ void P0A7E(void) {
 		}
 	}
 }
+
+void P0CA7(void)
+{
+	int P0CA7_condition_met = 0;
+
+	static uint32_t start_time;
+	static uint8_t P0CA7_flag = 0;
+	char buffer[100];
+
+	if((pri_current >= 1350 || pri_current <= -1350) || (pri_current_fa = 1 && sec_current >= 1350))
+	{
+		P0CA7_condition_met = 1;
+	}
+
+		if(P0CA7_condition_met){
+			if(!P0CA7_flag){
+				//first time entering the condition.
+				start_time = HAL_GetTick();
+				P0CA7_flag = 1;
+				sprintf(buffer, "P0CA7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+			}else{
+
+			     uint32_t current_time = HAL_GetTick();
+				 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+
+			     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+				 if(elapsed_time >= 0.5){
+					 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7\n", 6, 100);
+				 }
+			}
+		}
+}
+
+
+
+
+
 
 void display_values(void) {
 	char msg[64];
