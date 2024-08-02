@@ -75,7 +75,7 @@ double tempValues[MAX_TEMPS] = {0};
 char received_char;
 
 float min_cell, max_cell, min_temp, max_temp;
-int pri_current, pri_current_fa, sec_current;
+float pri_current, pri_current_fa, sec_current;
 int string;
 
 
@@ -90,6 +90,9 @@ int P1C00_flag = 0;
 int P1A9B_flag = 0;
 int P0A7E_flag = 0;
 int P1A9A_flag = 0;
+
+
+int P0CA7_demature = 0;
 
 clock_t start_time;
 //#define VCC 5;
@@ -226,7 +229,6 @@ void process_message(void) {
     int relay_num = 0;
     int relay_state = 0;
     int pc_state = 0;
-    int pri_current = 0;
 
 
     while (token != NULL) {
@@ -317,42 +319,37 @@ void process_message(void) {
 						sprintf(buffer, "Updated max_temp %lf\n", value);
 						HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
-		else if (sscanf(token, "HV_current_Pri:%d", &value) == 1) {
+		else if (sscanf(token, "HV_current_Pri:%lf", &value) == 1) {
 				pri_current = value;
-				sprintf(buffer, "Updated HV_current_Pri %d\n", pri_current);
+				sprintf(buffer, "Updated HV_current_Pri %lf\n", pri_current);
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
-		else if (sscanf(token, "HV_current_Pri_FA:%d", &value) == 1) {
+		else if (sscanf(token, "HV_current_Pri_FA:%lf", &value) == 1) {
 				pri_current_fa = value;
-				sprintf(buffer, "Updated HV_current_Pri_FA %d\n", pri_current_fa);
+				sprintf(buffer, "Updated HV_current_Pri_FA %lf\n", pri_current_fa);
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
-		else if (sscanf(token, "HV_current_Sec:%d", &value) == 1) {
+		else if (sscanf(token, "HV_current_Sec:%lf", &value) == 1) {
 				sec_current = value;
-				sprintf(buffer, "Updated HV_current_Sec %d\n", sec_current);
+				sprintf(buffer, "Updated HV_current_Sec %lf\n", sec_current);
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
 
-    else if (sscanf(token, "$0314_%d\n", &value) == 1) {
-        	string = value;
-        	P1C01_flag = 0;
-        	P1C00_flag = 0;
-        	P0A7E_flag = 0;
-        	sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
-        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-    }
-    else if (sscanf(token, "$0321_%d\n", &value) == 1) {
-    		string = value;
-    		P0CA7_flag = 0;
-    		sprintf(buffer, "P0CA7 flag reset manually\n");
-    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-    }
-//		else if(sscanf(token, "$0321_01") == 0)
-//		{
-//			P0CA7_flag = 0;
-//        	sprintf(buffer, "P0CA7 flag reset manually\n");
-//        	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-//		}
+		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
+				string = value;
+				P1C01_flag = 0;
+				P1C00_flag = 0;
+				P0A7E_flag = 0;
+				sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		}
+		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
+				string = value;
+				//P0CA7_demature = 1;
+				P0CA7_flag = 0;
+				sprintf(buffer, "P0CA7 demature is set manually\n");
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		}
         else {
             snprintf(buffer, 256, "Failed to parse token: %s\n", token);
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
@@ -393,7 +390,7 @@ void P0CA7(void)
 	}
 
 		static uint32_t start_time;
-		static uint8_t P0CA7_flag = 0;
+		static uint8_t P0CA7_flag = 0; //static: it initializes only once. then retains its value for all future func calls.
 		char buffer[100];
 
 		if(P0CA7_condition_met){
@@ -415,18 +412,12 @@ void P0CA7(void)
 					 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7\n", 6, 100);
 				 }
 			}
-		}else{
-			int all_cells_below_threshold = 1;
-				if(max_cell < 4.23){
-					all_cells_below_threshold = 0;
-				}
-
-			if(all_cells_below_threshold){
-				P0CA7_flag = 0;
-	            sprintf(buffer, "All cells below threshold, P0CA7 reset.\n");
-	            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-			}
 		}
+		else{
+			 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7 DEMATURE.\n", sizeof(buffer) - 1, 100);
+
+		}
+
 }
 
 void P0DE7(void) {
