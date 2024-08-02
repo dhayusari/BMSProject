@@ -213,10 +213,14 @@ class Relay(QWidget):
         self.controller = controller
         self.model = model
         self.id = id
-        layout = QHBoxLayout()
+        layout = QGridLayout()
 
         if id == 1:
             self.name = QLabel("Breaktor")
+            self.precharge = QPushButton("Precharge")
+            self.precharge.setCheckable(True)
+            layout.addWidget(self.precharge, 0, 1)
+            self.precharge.clicked.connect(self.precharge_routine)
         elif id == 2:
             self.name = QLabel("Battery Pack (+)")
         elif id == 3:
@@ -226,16 +230,16 @@ class Relay(QWidget):
         else:
             self.name = QLabel("Bus (-)")
 
-        self.button = QPushButton(text= "Off")
+        self.button = QPushButton(text= "Open")
         self.button.setCheckable(True)
 
         if self.model.relays[id - 1]:
-            self.button.setText("On")
+            self.button.setText("Close")
         
         self.button.clicked.connect(self.btn_clicked)
 
-        layout.addWidget(self.name)
-        layout.addWidget(self.button)
+        layout.addWidget(self.name, 0, 0)
+        layout.addWidget(self.button, 0, 2)
 
         self.setLayout(layout)
 
@@ -244,12 +248,19 @@ class Relay(QWidget):
 
     def btn_clicked(self, checked):
         self.controller.handle_relay_toggle(self.id, checked)
-        self.button.setText("On" if checked else "Off")
+        self.button.setText("Close" if checked else "Open")
 
     def update_relay(self):
         state = self.button.isChecked()
         self.button.setChecked(state)
-        self.button.setText("On" if state else "Off")
+        self.button.setText("Close" if state else "Open")
 
-
+    def precharge_routine(self, checked):
+        if checked:
+            self.controller.send_data("Precharge: 1")
+        
+    
+    def update_precharge(self, state):
+        if not state:
+            self.precharge.setChecked(False)
     

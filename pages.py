@@ -84,7 +84,10 @@ class Voltages(QMainWindow):
         layout1.addWidget(self.module, 8, 1)
 
         self.label5 = QLabel("Module Voltage:")
-        self.module_volt = QLineEdit(self.model.module['1'])
+        print("module dict: ", self.model.module['1'])
+        module = self.model.module['1']
+        print("module dict: ", module)
+        self.module_volt = QLineEdit(str(module[1]))
         self.module_volt.setReadOnly(True)
         self.module.currentIndexChanged.connect(self.module_voltage)
         layout1.addWidget(self.label5, 9, 0)

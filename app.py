@@ -40,16 +40,28 @@ class Data(QObject):
         self.voltages = [0.0] * 200
         self.module = {}
         self.module = self.calculate_module()
+        self.calc_volt = {
+            'Min_Cell': [0, 0],
+            'Max_Cell': [0,0],
+            'Average_Cell': 0,
+            'Highest_Module_Volt': [0,0],
+            'Lowest_Module_Volt': [0,0]
+        }
         self.temps = [0] * 50
-        self.relays = [0] * 5
+        self.calc_temps = {
+            'Min_Temp': 0,
+            'Max_Temp': 0,
+            'Average_Temp': 0
+        }
+        self.relays = [0] * 5 #initially open
         self.coolant = [0] * 2
         self.pwm = 0
     
     def calculate_module(self):
         for i in range(25):
             module = i * 8
-            average = sum(self.model[module:module+8]) / 8
-            self.module[str(module + 1)] = average
+            average = sum(self.voltages[module:module+8]) / 8
+            self.module[str(module // 8 + 1)] = average
         print(self.module)
     
     def update_module(self, cell_num):
@@ -91,16 +103,29 @@ class Data(QObject):
 
     def change_pwm(self, state):
         self.pwm = state
-        self.pwmChanged(state == 1)
+        self.pwmChanged.emit(state == 1)
+
+    def update_calc_volt(self):
+        #finding min
+        min_val = min(self.voltages)
+        min_id = self.voltages.index(min_val)
+        self.calc_volt['Min_Cell'] = [min_id, min_val]
+        #finding max
+        max_val = max(self.voltages)
+        max_id = self.voltages.index(max_val)
+        self.calc_volt['Max_Cell'] = [max_id, max_val]
+        #finding average
+        avg_volt = sum(self.voltages) / len(self.voltages)
+        self.calc_volt['Average_Cell'] = avg_volt
 
 
 class Controller:
     def __init__(self, model):
         self.model = model
-        self.serial_port = serial.Serial('com11', 115200, timeout=1)
-        self.worker = Worker(self.serial_port)
-        self.worker.data_received.connect(self.read_data)
-        self.worker.start()
+        # self.serial_port = serial.Serial('com11', 115200, timeout=1)
+        # self.worker = Worker(self.serial_port)
+        # self.worker.data_received.connect(self.read_data)
+        # self.worker.start()
 
     def __del__(self):
         # self.worker.stop()
@@ -109,7 +134,7 @@ class Controller:
 
     def send_data(self, data):
         print("Data being sent: ", data)
-        self.serial_port.write((data + '\n').encode('utf-8'))
+        # self.serial_port.write((data + '\n').encode('utf-8'))
     
     def read_data(self, data):
         print("Reading data: ", data)
