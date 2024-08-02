@@ -133,16 +133,19 @@ void process_message(void) {
 				max_temp = value;
 				sprintf(buffer, "Updated max_temp %lf\n", value);
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-
-        } else if (sscanf(token, "0314_%d\n", &value) == 1) {
+        } else if (sscanf(token, "$0314_%d\n", &value) == 1) {
             	string = value;
             	P1C01_flag = 0;
             	P1C00_flag = 0;
             	P0A7E_flag = 0;
-            	P0CA7_flag = 0;
-            	sprintf(buffer, "P1C01, P0A7E, P0CA7, and P1C00 flag reset manually\n");
+            	sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
             	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-        } else {
+        } else if (sscanf(token, "$0321_%d\n", &value) == 1) {
+        		string = value;
+        		P0CA7_flag = 0;
+        		sprintf(buffer, "P0CA7 flag reset manually\n");
+        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+        }else {
             	sprintf(buffer, "Failed to parse token: %s\n", token);
             	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
         }
@@ -458,7 +461,6 @@ int main(void)
       P1C00();
       P1A9B();
       P0A7E();
-      P0CA7();
       HAL_Delay(1000);
 
   }
