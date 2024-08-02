@@ -152,11 +152,17 @@ class Voltages(QMainWindow):
         if update:
             high = self.model.calc_volt['Max_Cell']
             self.high_volt.setText(str(high[1]))
-            self.high_loc.setText(str(high[0]))
+            self.high_loc.setText(str(high[0]+ 1))
+            data_high = "Max Cell: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            self.controller.send_data(data_high)
             low = self.model.calc_volt['Min_Cell']
             self.low_volt.setText(str(low[1]))
-            self.low_loc.setText(str(low[0]))
+            self.low_loc.setText(str(low[0] + 1))
+            data_low = "Min Cell: " + "("+ str(low[0])+","+ str(low[1]) + ")"
+            self.controller.send_data(data_low)
             self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
+            data_avg = "Average Volt: " + str(self.model.calc_volt['Average_Cell'])
+            self.controller.send_data(data_avg)
     
     def set_button(self):
         self.start = int(self.start_edit.text())
@@ -273,10 +279,10 @@ class Temperatures(QMainWindow):
         if update:
             high = self.model.calc_temps['Max_Temp']
             self.max_temp.setText(str(high[1]))
-            self.max_temp_loc.setText(str(high[0]))
+            self.max_temp_loc.setText(str(high[0] + 1))
             low = self.model.calc_temps['Min_Temp']
             self.min_temp.setText(str(low[1]))
-            self.min_temp_loc.setText(str(low[0]))
+            self.min_temp_loc.setText(str(low[0] + 1))
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
 
 class Relays(QWidget):
@@ -285,17 +291,19 @@ class Relays(QWidget):
         self.setWindowTitle("Relay Controls")
         layout = QVBoxLayout()
         
-        self.relay1 = Relay(1, controller, model)
-        layout.addWidget(self.relay1)
-        self.relay2 = Relay(2, controller, model)
-        layout.addWidget(self.relay2)
-        self.relay3 = Relay(3, controller,  model)
-        layout.addWidget(self.relay3)
-        self.relay4 = Relay(4, controller, model)
-        layout.addWidget(self.relay4)
-        self.breaktor = Relay(5, controller, model)
-        layout.addWidget(self.breaktor)
+        layout1 = QGridLayout()
+        self.breaktor = Relay(1, controller, model)
+        layout1.addWidget(self.breaktor, 0,0)
+        self.relay1 = Relay(2, controller, model)
+        layout1.addWidget(self.relay1, 1, 0)
+        self.relay2 = Relay(3, controller,  model)
+        layout1.addWidget(self.relay2, 2, 0)
+        self.relay3 = Relay(4, controller, model)
+        layout1.addWidget(self.relay3, 3, 0)
+        self.relay4 = Relay(5, controller, model)
+        layout1.addWidget(self.relay4, 4, 0)
 
+        layout.addLayout(layout1)
         self.setLayout(layout)
 
 class Routines(QWidget):
@@ -304,27 +312,55 @@ class Routines(QWidget):
         self.controller = controller
         self.model = model
 
-        layout = QGridLayout()
+        layout = QVBoxLayout()
+        layout1 = QGridLayout()
         self.routine_label = QLabel("Input Routine")
+        self.label = QLabel("If there is a space in the routine, use and underscore(_)")
         self.routine = QLineEdit()
         self.send = QPushButton("Send")
         self.label = QLabel("PWM")
         self.pwm_edit = QLineEdit("")
 
-        layout.addWidget(self.routine_label, 0, 0)
-        layout.addWidget(self.routine, 0, 1)
-        layout.addWidget(self.send, 0, 2)
-        layout.addWidget(self.label, 1, 0)
-        layout.addWidget(self.pwm_edit, 1, 1)
+        self.hv_cur_pri_lbl = QLabel("HV Current Primary")
+        self.hv_cur_pri = QLineEdit()
+        self.set_current_pri = QPushButton("Set")
+        self.hv_cur_fa_lbl = QLabel("HV Current Primary FA")
+        self.hv_cur_fa = QLineEdit()
+        self.set_current_fa = QPushButton("Set")
 
+        layout1.addWidget(self.routine_label, 3, 0)
+        layout1.addWidget(self.routine, 3, 1)
+        layout1.addWidget(self.send, 3, 2)
+        layout1.addWidget(self.label, 0, 0)
+        layout1.addWidget(self.pwm_edit, 0, 1)
+        layout1.addWidget(self.hv_cur_pri_lbl, 1, 0)
+        layout1.addWidget(self.hv_cur_pri, 1, 1)
+        layout1.addWidget(self.set_current_pri, 1, 2)
+        layout1.addWidget(self.hv_cur_fa_lbl, 2, 0)
+        layout1.addWidget(self.hv_cur_fa, 2, 1)
+        layout1.addWidget(self.set_current_fa, 2, 2)
+    
+
+        self.set_current_pri.clicked.connect(self.send_current_prim)
+        self.set_current_pri.clicked.connect(self.send_current_fa)
         self.send.clicked.connect(self.send_routine)
         
         self.controller.model.pwmChanged.connect(self.update_pwm)
         
+        layout.addLayout(layout1)
+        layout.addWidget(self.label)
         self.setLayout(layout)
     
     def send_routine(self):
         data = "Routine " + self.routine.text()
+        self.controller.send_data(data)
+    
+    def send_current_prim(self):
+        data = "HV_current_Pri:" + self.hv_cur_pri.text()
+        self.controller.send_data(data)
+    
+    def send_current_fa(self):
+        data = "HV_current_Pri_FA:" + self.hv_cur_fa.text()
         self.controller.send_data(data)
 
     def update_pwm(self, state):
