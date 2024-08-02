@@ -397,8 +397,8 @@ void P0CA7(void)
 
 	static uint32_t start_time;
 	static uint8_t P0CA7_flag = 0;
-	char buffer[100]; 
-		
+	char buffer[100];
+
 	if((pri_current >= 1350 || pri_current <= -1350) || (pri_current_fa = 1 && sec_current >= 1350))
 	{
 		P0CA7_condition_met = 1;
@@ -422,17 +422,6 @@ void P0CA7(void)
 				 if(elapsed_time >= 0.5){
 					 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7\n", 6, 100);
 				 }
-			}
-		}else{
-			int all_cells_below_threshold = 1;
-				if(max_cell < 4.23){
-					all_cells_below_threshold = 0;
-				}
-
-			if(all_cells_below_threshold){
-				P0CA7_flag = 0;
-	            sprintf(buffer, "All cells below threshold, P0CA7 reset.\n");
-	            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 			}
 		}
 }
@@ -513,6 +502,7 @@ int main(void)
       P1C00();
       P1A9B();
       P0A7E();
+      P0CA7();
       HAL_Delay(1000);
 
   }
