@@ -38,6 +38,7 @@ class Data(QObject):
     def __init__(self):
         super().__init__()
         self.voltages = [0.0] * 200
+        self.pot = [0] * 200
         self.module = {}
         self.calculate_module()
         self.calc_volt = {
@@ -106,6 +107,10 @@ class Data(QObject):
     def change_pwm(self, state):
         self.pwm = state
         self.pwmChanged.emit(state == 1)
+    
+    def change_pot(self, num, volt):
+        for i in range(num*8, num*8 + 8, 1):
+            self.pot[i] = volt
 
     def update_calc_volt(self):
         #finding min
@@ -176,8 +181,11 @@ class Controller:
     
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
-        for i in range(int(start) - 1, int(end), 1):
-            self.handle_change_voltage(i, volt)
+        # for i in range(int(start) - 1, int(end), 1):
+        #     self.handle_change_voltage(i, volt)
+    
+    def handle_set_pot(self, module, volt):
+        self.model.set_pot(module, volt)
     
     def handle_change_voltage(self, cell_num, volt):
         self.model.change_voltage(cell_num, volt)

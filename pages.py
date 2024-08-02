@@ -181,9 +181,11 @@ class Voltages(QMainWindow):
         self.module_volt.setText(str(voltage))
     
     def change_input(self, checked):
-        while checked:
+        if checked:
             self.laptop_btn.setChecked(False)
-            self.controller.read_data()
+            for i, val in enumerate(self.model.pot):
+                self.controller.handle_change_voltage(i, val)
+
     
     def stop_read(self, checked):
         if checked:
@@ -280,10 +282,16 @@ class Temperatures(QMainWindow):
             high = self.model.calc_temps['Max_Temp']
             self.max_temp.setText(str(high[1]))
             self.max_temp_loc.setText(str(high[0] + 1))
+            data_high = "Max Temp: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            self.controller.send_data(data_high)
             low = self.model.calc_temps['Min_Temp']
             self.min_temp.setText(str(low[1]))
             self.min_temp_loc.setText(str(low[0] + 1))
+            data_low = "Min Temp: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            self.controller.send_data(data_high)
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
+            data_avg = "Average Temp: " + str(self.model.calc_temps['Average_Temp'])
+            self.controller.send_data(data_avg)
 
 class Relays(QWidget):
     def __init__(self, controller, model):
