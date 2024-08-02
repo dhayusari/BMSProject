@@ -94,12 +94,12 @@ class SpinBox(QWidget):
     def set_voltage(self):
         voltage = self.spin_box.value()
         self.en_button.setChecked(voltage > 0)
+        self.en_button.setText("On")
         self.controller.handle_change_voltage(self.num, voltage)
     
     def update_voltage(self, cell_num, voltage):
-        if cell_num == self.cell_idx:
-            self.slider.setValue(voltage * 10)
-            self.label2.setText(f"{voltage:.2f}")
+        if cell_num == self.num:
+            self.spin_box.setValue(voltage)
             
 
 

@@ -39,7 +39,7 @@ class Data(QObject):
         super().__init__()
         self.voltages = [0.0] * 200
         self.module = {}
-        self.module = self.calculate_module()
+        self.calculate_module()
         self.calc_volt = {
             'Min_Cell': [0, 0],
             'Max_Cell': [0,0],
@@ -65,16 +65,17 @@ class Data(QObject):
         print(self.module)
     
     def update_module(self, cell_num):
-        module = cell_num / 8
-        print("Module {module} Updated!")
-        average = sum(self.model[module:module+8]) / 8
-        self.module[module + 1] = average
+        module = cell_num // 8
+        print("Module ", str(module + 1), " Updated!")
+        average = sum(self.voltages[cell_num:cell_num + 8]) / 8
+        self.module[str(module + 1)] = average
     
     def change_voltage(self, cell_num, volt):
         print("Changed Cell Voltage:", cell_num + 1)
         self.voltages[cell_num] = volt
         self.voltageChanged.emit(cell_num, volt)
         self.update_module(cell_num)
+        self.update_calc_volt()
     
     def set_range_voltage(self, start, end, volt):
         print("Change Voltage Cell Range")
@@ -89,6 +90,7 @@ class Data(QObject):
         print("Changed Temp Number: ", temp_num + 1)
         self.temps[temp_num] = temp
         self.tempChanged.emit(temp_num, temp)
+        self.update_calc_temp()
     
     def toggle_relay(self, id):
         print("Relay toggled!")
@@ -117,6 +119,21 @@ class Data(QObject):
         #finding average
         avg_volt = sum(self.voltages) / len(self.voltages)
         self.calc_volt['Average_Cell'] = avg_volt
+        self.updateVoltages.emit(True)
+    
+    def update_calc_temp(self):
+        #finding min
+        min_val = min(self.temps)
+        min_id = self.temps.index(min_val)
+        self.calc_temps['Min_Temp'] = [min_id, min_val]
+        #finding max
+        max_val = max(self.temps)
+        max_id = self.temps.index(max_val)
+        self.calc_temps['Max_Temp'] = [max_id, max_val]
+        #finding average
+        avg_temp = sum(self.temps) / len(self.voltages)
+        self.calc_temps['Average_Temp'] = avg_temp
+        self.updateTemps.emit(True)
 
 
 class Controller:

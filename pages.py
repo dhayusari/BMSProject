@@ -72,6 +72,7 @@ class Voltages(QMainWindow):
         self.pot_btn.setCheckable(True)
         self.laptop_btn = QPushButton("Laptop")
         self.laptop_btn.setCheckable(True)
+        self.laptop_btn.setChecked(True)
         layout1.addWidget(self.input_label, 7, 0)
         layout1.addWidget(self.pot_btn, 7, 1)
         layout1.addWidget(self.laptop_btn, 7, 2)
@@ -87,7 +88,7 @@ class Voltages(QMainWindow):
         print("module dict: ", self.model.module['1'])
         module = self.model.module['1']
         print("module dict: ", module)
-        self.module_volt = QLineEdit(str(module[1]))
+        self.module_volt = QLineEdit(str(module))
         self.module_volt.setReadOnly(True)
         self.module.currentIndexChanged.connect(self.module_voltage)
         layout1.addWidget(self.label5, 9, 0)
@@ -101,11 +102,21 @@ class Voltages(QMainWindow):
         layout2.addWidget(self.cell_voltages_label, 0,  0)
 
         self.high_lbl = QLabel("Highest Cell Voltage")
-        self.high_volt = QLineEdit(str(max(self.model.voltages)))
+        max_cell = self.model.calc_volt['Max_Cell']
+        self.high_volt = QLineEdit(str(max_cell[1]))
         self.high_volt.setReadOnly(True)
+        self.high_loc_lbl = QLabel("Cell Location")
+        self.high_loc = QLineEdit(str(max_cell[0]))
+        self.high_volt.setReadOnly(True)
+
+        min_cell = self.model.calc_volt['Min_Cell']
         self.low_lbl = QLabel("Lowest Cell Voltage")
-        self.low_volt = QLineEdit(str(min(self.model.voltages)))
+        self.low_volt = QLineEdit(str(min_cell[1]))
         self.low_volt.setReadOnly(True)
+        self.low_loc_lbl = QLabel("Cell Location")
+        self.low_loc = QLineEdit(str(min_cell[0]))
+        self.low_volt.setReadOnly(True)
+
         self.avg_lbl = QLabel("Average Cell Voltage")
         self.avg_volt =QLineEdit(str(sum(self.model.voltages) / len(self.model.voltages)))
         self.avg_volt.setReadOnly(True)
@@ -134,6 +145,18 @@ class Voltages(QMainWindow):
         self.scroll.setWidget(self.widget)
 
         self.setCentralWidget(self.scroll)
+
+        self.controller.model.updateVoltages.connect(self.update_voltages)
+    
+    def update_voltages(self, update):
+        if update:
+            high = self.model.calc_volt['Max_Cell']
+            self.high_volt.setText(str(high[1]))
+            self.high_loc.setText(str(high[0]))
+            low = self.model.calc_volt['Min_Cell']
+            self.low_volt.setText(str(low[1]))
+            self.low_loc.setText(str(low[0]))
+            self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
     
     def set_button(self):
         self.start = int(self.start_edit.text())
@@ -238,12 +261,23 @@ class Temperatures(QMainWindow):
 
          # Connect model signal to update slot
         self.controller.model.coolantChanged.connect(self.update_coolant)
+        self.controller.model.updateTemps.connect(self.update_temp)
     
     def update_coolant(self, id, temp):
         if id == 0:
             self.temp1.setText(str(temp))
         else:
             self.temp2.setText(str(temp))
+    
+    def update_temp(self, update):
+        if update:
+            high = self.model.calc_temps['Max_Temp']
+            self.max_temp.setText(str(high[1]))
+            self.max_temp_loc.setText(str(high[0]))
+            low = self.model.calc_temps['Min_Temp']
+            self.min_temp.setText(str(low[1]))
+            self.min_temp_loc.setText(str(low[0]))
+            self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
 
 class Relays(QWidget):
     def __init__(self, controller, model):
@@ -281,13 +315,21 @@ class Routines(QWidget):
         layout.addWidget(self.routine, 0, 1)
         layout.addWidget(self.send, 0, 2)
         layout.addWidget(self.label, 1, 0)
-        layout.addWidget(self.volt_edit, 1, 1)
+        layout.addWidget(self.pwm_edit, 1, 1)
 
         self.send.clicked.connect(self.send_routine)
+        
+        self.controller.model.pwmChanged.connect(self.update_pwm)
         
         self.setLayout(layout)
     
     def send_routine(self):
         data = "Routine " + self.routine.text()
         self.controller.send_data(data)
+
+    def update_pwm(self, state):
+        if state:
+            self.pwm_edit.setText("Connected")
+        else:
+            self.pwm_edit.setText("Disconnected")
         
