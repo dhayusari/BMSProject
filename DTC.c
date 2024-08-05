@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <stdbool.h>
 
 /* USER CODE END Includes */
 
@@ -64,7 +65,7 @@ double cellVoltages[MAX_CELLS] = {0}; // Assuming a maximum of 10 cells
 double tempValues[MAX_TEMPS] = {0};
 float min_cell, max_cell, min_temp, max_temp;
 int pri_current, pri_current_fa, sec_current;
-int string;
+int string, duty_cycle;
 
 char received_char;
 
@@ -79,6 +80,7 @@ int P1A9B_flag = 0;
 int P0A7E_flag = 0;
 int P1A9A_flag = 0;
 int P0CA7_flag = 0;
+int P29FF_flag = 0;
 
 clock_t start_time;
 
@@ -573,36 +575,36 @@ void P29FF(void) {
     char buffer[256];
     int size = 50;
 
-    if (min_cell < 2.1) 
+    if (min_cell < 2.1)
     {
-        for (int i = 0; i < size - 1; i++) 
+        for (int i = 0; i < size - 1; i++)
         {
-            for (int j = i + 1; j < size; j++) 
+            for (int j = i + 1; j < size; j++)
             {
-                if (fabs(tempValues[i] - tempValues[j]) == 2) 
+                if (fabs(tempValues[i] - tempValues[j]) == 2)
                 {
                     P29FF_condition_met = 1;
                     break; // Exit the inner loop if condition is met
                 }
             }
-            if (P29FF_condition_met) 
+            if (P29FF_condition_met)
             {
                 break; // Exit the outer loop if condition is met
             }
         }
     }
 
-    if (P29FF_condition_met) 
+    if (P29FF_condition_met)
     {
-        if (!P29FF_flag) 
+        if (!P29FF_flag)
         {
             start_time = HAL_GetTick();
             P29FF_flag = 1;
             sprintf(buffer, "P29FF condition met, Start_time set: %.2f s\n", (float)start_time / 1000.0);
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-        } 
-        
-        else 
+        }
+
+        else
         {
             uint32_t current_time = HAL_GetTick();
             float elapsed_time = (float)(current_time - start_time) / 1000.0;
@@ -610,14 +612,14 @@ void P29FF(void) {
             sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
-            if (elapsed_time >= 600) 
+            if (elapsed_time >= 600)
             {
                 HAL_UART_Transmit(&huart2, (uint8_t*)"DTC P29FF Mature\n", 17, 100);
             }
         }
-    } 
-    
-    else 
+    }
+
+    else
     {
         P29FF_flag = 0;
     }
