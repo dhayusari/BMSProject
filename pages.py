@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import QMainWindow, QScrollArea, QLabel, QWidget, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QGridLayout, QLineEdit
 
-from widgets import Slider, TempModule, Relay, SpinBox
+from widgets import TempModule, Relay, SpinBox
 
 class Voltages(QMainWindow):
     def __init__(self, controller, model):
@@ -21,7 +21,6 @@ class Voltages(QMainWindow):
         #main layout
         layout = QVBoxLayout()
 
-
         ##inputs for cell voltages
         layout1 = QGridLayout()
 
@@ -30,7 +29,6 @@ class Voltages(QMainWindow):
         self.volt_edit = QLineEdit()
         self.on_btn = QPushButton("Off")
         self.set_btn = QPushButton("Set")
-
 
         layout1.addWidget(self.label, 0, 0)
         layout1.addWidget(self.volt_edit, 0, 1)
@@ -77,6 +75,7 @@ class Voltages(QMainWindow):
         layout1.addWidget(self.pot_btn, 7, 1)
         layout1.addWidget(self.laptop_btn, 7, 2)
         self.pot_btn.clicked.connect(self.change_input)
+        self.laptop_btn.clicked.connect(self.stop_read)
 
         self.label4 = QLabel("Choose Module:")
         self.module = QComboBox()
@@ -93,9 +92,6 @@ class Voltages(QMainWindow):
         self.module.currentIndexChanged.connect(self.module_voltage)
         layout1.addWidget(self.label5, 9, 0)
         layout1.addWidget(self.module_volt, 9, 1)
-
-       #self.high_mod_lbl = QLabel("Highest Module Voltage")
-        
 
         layout2 = QGridLayout()
         self.cell_voltages_label = QLabel("Cell Voltages")
@@ -185,15 +181,17 @@ class Voltages(QMainWindow):
         if checked:
             self.laptop_btn.setChecked(False)
             for i, val in enumerate(self.model.pot):
-                self.controller.handle_change_voltage(i - 0, val)
+                self.controller.handle_change_voltage(i, val)
     
-    def update_pot(self):
+    def update_pot(self, id, val):
         if self.pot_btn.isChecked():
-            self.controller.handle_change_voltage(i - 0, val)
+            self.controller.handle_change_voltage(id - 1, val)
 
     def stop_read(self, checked):
         if checked:
             self.pot_btn.setChecked(False)
+            self.controller.handle_set_voltage_range(0, 200, 0)
+
 
 class Temperatures(QMainWindow):
     def __init__(self, controller, model):
@@ -288,15 +286,15 @@ class Temperatures(QMainWindow):
             high = self.model.calc_temps['Max_Temp']
             self.max_temp.setText(str(high[1]))
             self.max_temp_loc.setText(str(high[0] + 1))
-            data_high = "Max Temp: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            data_high = "MaxTemp:" + "("+ str(high[0])+","+ str(high[1]) + ")"
             self.controller.send_data(data_high)
             low = self.model.calc_temps['Min_Temp']
             self.min_temp.setText(str(low[1]))
             self.min_temp_loc.setText(str(low[0] + 1))
-            data_low = "Min Temp: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            data_low = "MinTemp:" + "("+ str(high[0])+","+ str(high[1]) + ")"
             self.controller.send_data(data_low)
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
-            data_avg = "Average Temp: " + str(self.model.calc_temps['Average_Temp'])
+            data_avg = "AverageTemp:" + str(self.model.calc_temps['Average_Temp'])
             self.controller.send_data(data_avg)
 
 class Relays(QWidget):
@@ -378,7 +376,7 @@ class Routines(QWidget):
 
 
     def send_routine(self):
-        data = "Routine " + self.routine.text()
+        data = "Routine:" + self.routine.text()
         self.controller.send_data(data)
     
     def send_current_prim(self):

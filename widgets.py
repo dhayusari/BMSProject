@@ -1,53 +1,6 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
-from PyQt6.QtWidgets import QWidget, QSlider, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QLineEdit, QPushButton, QDoubleSpinBox
-
-class Slider(QWidget):
-    def __init__(self, num, voltage, controller, parent=None):
-        super(Slider, self).__init__(parent)
-        self.setMinimumSize(100, 200)  
-        self.controller = controller
-        self.cell_idx = num
-        name = "Cell " + str(num + 1)
-        self.label = QLabel(name, self)
-        self.slider = QSlider(self)
-        self.slider.setOrientation(Qt.Orientation.Vertical)
-        self.slider.setTickPosition(QSlider.TickPosition.TicksRight)
-        self.slider.setMaximum(60)
-        self.slider.setMinimum(0)
-        self.slider.setTickInterval(1)
-        self.slider.setValue(int(voltage))
-        self.label2 = QLabel(str(voltage / 10), self)
-
-        # Behaviour handling
-        self.slider.valueChanged.connect(self.changed_value)
-        self.slider.sliderReleased.connect(self.slider_released)
-
-        # Layout
-        self.layout = QVBoxLayout(self)
-        self.layout.addWidget(self.label, alignment = Qt.AlignmentFlag.AlignCenter)
-        self.layout.addWidget(self.slider, alignment = Qt.AlignmentFlag.AlignCenter)
-        self.layout.addWidget(self.label2, alignment = Qt.AlignmentFlag.AlignCenter)
-        self.layout.addStretch()
-
-        # Connect model signal to update slot
-        self.controller.model.voltageChanged.connect(self.update_slider)
-
-    def changed_value(self, val):
-        scaled = round(val / 10, 2)
-        print((val / 10))
-        self.label2.setText(f"{scaled}")  
-
-    def slider_released(self):
-        voltage = round(self.slider.value() / 10, 2)
-        self.controller.handle_change_voltage(self.cell_idx, float(voltage))
-        print("Slider released! Final Voltage:", f"{voltage}")
-
-    def update_slider(self, cell_num, voltage):
-        if cell_num == self.cell_idx:
-            self.slider.setValue(int(voltage * 10))
-            self.label2.setText(f"{voltage:.2f}")
-
+from PyQt6.QtWidgets import QWidget, QSlider, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QPushButton, QDoubleSpinBox
 
 class SpinBox(QWidget):
     def __init__(self, num, voltage, controller):
@@ -100,8 +53,6 @@ class SpinBox(QWidget):
     def update_voltage(self, cell_num, voltage):
         if cell_num == self.num:
             self.spin_box.setValue(voltage)
-            
-
 
 class TempModule(QWidget):
     def __init__(self, num, temp, controller):

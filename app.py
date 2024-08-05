@@ -177,6 +177,10 @@ class Data(QObject):
                 desc = "HVIL circuit open"
             elif code == "P0A0B":
                 desc = "HVIL Performance Low"
+            elif code == "P0A0C":
+                desc = "HVIL Circuit Low"
+            elif code == "P29FF":
+                desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
             self.dtc[str(code)] = desc
         else:
             del self.dtc[code]
