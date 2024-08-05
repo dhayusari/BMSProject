@@ -147,6 +147,7 @@ class Voltages(QMainWindow):
         self.setCentralWidget(self.scroll)
 
         self.controller.model.updateVoltages.connect(self.update_voltages)
+        self.controller.model.updatePot.connect(self.update_pot)
     
     def update_voltages(self, update):
         if update:
@@ -184,7 +185,11 @@ class Voltages(QMainWindow):
         if checked:
             self.laptop_btn.setChecked(False)
             for i, val in enumerate(self.model.pot):
-                self.controller.handle_change_voltage(i, val)
+                self.controller.handle_change_voltage(i - 0, val)
+    
+    def update_pot(self):
+        if self.pot_btn.isChecked():
+            self.controller.handle_change_voltage(i - 0, val)
 
     def stop_read(self, checked):
         if checked:
@@ -271,9 +276,9 @@ class Temperatures(QMainWindow):
         self.controller.model.updateTemps.connect(self.update_temp)
     
     def update_coolant(self, id, temp):
-        if id == 0:
+        if id == 1:
             self.temp1.setText(str(temp))
-        else:
+        elif id == 2:
             self.temp2.setText(str(temp))
     
     def update_temp(self, update):

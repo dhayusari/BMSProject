@@ -35,6 +35,7 @@ class Data(QObject):
     updateTemps = pyqtSignal(bool)
     pwmChanged = pyqtSignal(bool)
     updateDTC = pyqtSignal(str, int)
+    updatePot = pyqtSignal(int, int)
 
     def __init__(self):
         super().__init__()
@@ -123,6 +124,7 @@ class Data(QObject):
     def change_pot(self, num, volt):
         for i in range(num*8, num*8 + 8, 1):
             self.pot[i] = volt
+        self.updatePot.emit(num, volt)
 
     def update_calc_volt(self):
         #finding min
