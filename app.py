@@ -79,9 +79,9 @@ class Data(QObject):
         for module in self.module.keys():
             volt = self.module[module]
             if volt <= min_volt:
-                self.calc_voltage['Lowest_Module_Volt'] = [int(module), volt]
+                self.calc_volt['Lowest_Module_Volt'] = [int(module), volt]
             elif volt >= max_volt:
-                self.calc_voltage['Highest_Module_Volt'] = [int(module, volt)]
+                self.calc_volt['Highest_Module_Volt'] = [int(module, volt)]
     
     def change_voltage(self, cell_num, volt):
         print("Changed Cell Voltage:", cell_num + 1)
@@ -184,19 +184,19 @@ class Data(QObject):
 class Controller:
     def __init__(self, model):
         self.model = model
-        # self.serial_port = serial.Serial('com11', 115200, timeout=1)
-        # self.worker = Worker(self.serial_port)
-        # self.worker.data_received.connect(self.read_data)
-        # self.worker.start()
+        self.serial_port = serial.Serial('com11', 115200, timeout=1)
+        self.worker = Worker(self.serial_port)
+        self.worker.data_received.connect(self.read_data)
+        self.worker.start()
 
     def __del__(self):
-        # self.worker.stop()
+        self.worker.stop()
         print("Worker has stopped")
-        # self.serial_port.close()
+        self.serial_port.close()
 
     def send_data(self, data):
         print("Data being sent: ", data)
-        # self.serial_port.write((data + '\n').encode('utf-8'))
+        self.serial_port.write((data + '\n').encode('utf-8'))
     
     def read_data(self, data):
         print("Reading data: ", data)
@@ -212,14 +212,14 @@ class Controller:
         if pot_match:
             for match in pot_match:
             # print("\npattern1 matched. \n")
-                cell_num = int(match.group(1))
-                cell_value = float(match.group(2))
+                cell_num = int(match[0])
+                cell_value = float(match[1])
                 self.handle_set_pot(cell_num, cell_value)
         if temp_match:
             for match in temp_match:
             #print("\npattern2 matched. \n")
-                temp_num = int(match.group(1))
-                temp_value = float(match.group(2))
+                temp_num = int(match[0])
+                temp_value = float(match[1])
                 self.handle_change_coolant(temp_num, temp_value)
         if dtc_match:
             for match in dtc_match:
@@ -237,7 +237,7 @@ class Controller:
         #     self.handle_change_voltage(i, volt)
     
     def handle_set_pot(self, module, volt):
-        self.model.set_pot(module, volt)
+        self.model.change_pot(module, volt)
     
     def handle_change_voltage(self, cell_num, volt):
         self.model.change_voltage(cell_num, volt)
