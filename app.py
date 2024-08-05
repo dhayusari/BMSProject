@@ -30,7 +30,7 @@ class Data(QObject):
     voltageChanged = pyqtSignal(int, float)
     tempChanged = pyqtSignal(int, int)
     relayToggled = pyqtSignal(int, bool)
-    coolantChanged = pyqtSignal(int, int)
+    coolantChanged = pyqtSignal(int)
     updateVoltages = pyqtSignal(bool)
     updateTemps = pyqtSignal(bool)
     pwmChanged = pyqtSignal(bool)
@@ -115,7 +115,7 @@ class Data(QObject):
         print("Coolant:  ", id)
         print("Temp: ", temp)
         self.coolant[id - 1]= temp
-        self.coolantChanged.emit(id, temp)
+        self.coolantChanged.emit(id)
 
     def change_pwm(self, state):
         self.pwm = state

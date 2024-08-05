@@ -275,10 +275,12 @@ class Temperatures(QMainWindow):
         self.controller.model.coolantChanged.connect(self.update_coolant)
         self.controller.model.updateTemps.connect(self.update_temp)
     
-    def update_coolant(self, id, temp):
+    def update_coolant(self, id):
         if id == 1:
+            temp = self.model.coolant[0]
             self.temp1.setText(str(temp))
         elif id == 2:
+            temp = self.model.coolant[1]
             self.temp2.setText(str(temp))
     
     def update_temp(self, update):
