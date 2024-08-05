@@ -163,7 +163,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 {
                 	snprintf(PWMbuf, 50, "\n\rPWM Connected.\n\r");
 					 //snprintf(PWMbuf, 50, "\n\rFreq: %lu Hz, Duty Cycle: %lu%%\n\r", freq, duty_cycle);
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
+					 //HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
 					 //msgSent = 1;
 
                 }
@@ -171,7 +171,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 {
                 	snprintf(PWMbuf, 50, "\n\rPWM Disconnected.\n\r");
                 	//snprintf(PWMbuf,50 , "\r\n PWM SIGNAL DOES NOT MATCH. DTC \n\r");
-					HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
+					//HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
 					//msgSent = 1;
                 }
 //                else if(msgSent == 1 && counter > 100)
@@ -250,28 +250,28 @@ void process_message(void) {
 		else if (sscanf(token, "Relay%d:%d", &relay_num, &relay_state) == 2) {
             switch (relay_num) {
                 case 1:
-                    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, relay_state ? 1 : 0);
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, relay_state ? 1 : 0);
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
 
                     break;
                 case 2:
-                    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, relay_state ? 1 : 0);
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, relay_state ? 1 : 0);
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
                     break;
                 case 3:
-                    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, relay_state ? 1 : 0);
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, relay_state ? 1 : 0);
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
                     break;
                 case 4:
-                    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, relay_state ? 1 : 0);
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, relay_state ? 1 : 0);
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
                     break;
                 case 5:
-                    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, relay_state ? 1 : 0);
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, relay_state ? 1 : 0);
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
                     break;
@@ -281,19 +281,19 @@ void process_message(void) {
                     break;
             }
         }
-		else if (sscanf(token, "Precharge: %d", &pc_state) == 1)
+		else if (sscanf(token, "Precharge:%d", &pc_state) == 1)
 		{
 			// 2 then 3 then 1 then open 2 then open 3.
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 1); //close 2
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 1); //close 2
 			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 1); //close 3
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, 1); //close 3
 			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 1); //close 1
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, 1); //close 1
 			HAL_Delay(1000);
 
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_3, 0); //open 2
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 0); //open 2
 			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 0); //open 3
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, 0); //open 3
 
 			snprintf(buffer, 256,"\nPrecharge Done\n");
 			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
@@ -345,7 +345,6 @@ void process_message(void) {
 		}
 		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
 				string = value;
-				//P0CA7_demature = 1;
 				P0CA7_flag = 0;
 				sprintf(buffer, "P0CA7 demature is set manually\n");
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
@@ -728,10 +727,21 @@ int main(void)
 	  }
 	  adcConversionCplt = 0;
 
-	  snprintf(txBuf, 225 ,"\n\npot1: %d\t, pot2: %d\t, pot3: %d\t, pot4: %d\t, pot5: %d\t, pot6: %d\t, pot7: %d\t,\n pot8: %d\t, pot9: %d\t, pot10: %d\t, pot11: %d\t, pot12: %d\t, pot13: %d\t, pot14: %d\n\n",
-	  adcResultsDMA[0], adcResultsDMA[1], adcResultsDMA[2], adcResultsDMA[3], adcResultsDMA[4], adcResultsDMA[5],adcResultsDMA[6], adcResultsDMA[7], adcResultsDMA[8], adcResultsDMA[9],
-	  adcResultsDMA[10], adcResultsDMA[11], adcResultsDMA[12], adcResultsDMA[13]);
+	  float potADC[adcChannelCount];
+	  for (int i = 0; i< adcChannelCount; i++)
+	  {
+		  potADC[i] = (float)adcResultsDMA[i] * (3.3 / 4095.0);
+		  potADC[i] = (potADC[i] / 3.3) * (6.0);
+	  }
 
+
+
+//	  snprintf(txBuf, 225 ,"\n\npot1: %d\t, pot2: %d\t, pot3: %d\t, pot4: %d\t, pot5: %d\t, pot6: %d\t, pot7: %d\t,\n pot8: %d\t, pot9: %d\t, pot10: %d\t, pot11: %d\t, pot12: %d\t, pot13: %d\t, pot14: %d\n\n",
+//	  adcResultsDMA[0], adcResultsDMA[1], adcResultsDMA[2], adcResultsDMA[3], adcResultsDMA[4], adcResultsDMA[5],adcResultsDMA[6], adcResultsDMA[7], adcResultsDMA[8], adcResultsDMA[9],
+//	  adcResultsDMA[10], adcResultsDMA[11], adcResultsDMA[12], adcResultsDMA[13]);
+
+	  snprintf(txBuf, 225, "\n\npot1: %0.2f\t, pot2: %0.2f\t, pot3: %0.2f\t, pot4: %0.2f\t, pot5: %0.2f\t, pot6: %0.2f\t, pot7: %0.2f\t,\n pot8: %0.2f\t, pot9: %0.2f\t, pot10: %0.2f\t, pot11: %0.2f\t, pot12: %0.2f\t, pot13: %0.2f\t, pot14: %0.2f\n",
+			  potADC[0], potADC[1], potADC[2], potADC[3], potADC[4], potADC[5], potADC[6], potADC[7], potADC[8],potADC[9], potADC[10], potADC[11], potADC[12], potADC[13]);
 
 	  uint32_t t1_read, t2_read;
 	  float T0 = 25 + 273.15;
@@ -1254,15 +1264,28 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_0
+                          |GPIO_PIN_1, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PE2 PE3 PE4 PE0
+                           PE1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_0
+                          |GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PB2 */
   GPIO_InitStruct.Pin = GPIO_PIN_2;
