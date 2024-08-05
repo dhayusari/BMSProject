@@ -162,21 +162,22 @@ class Controller:
         print("Reading data: ", data)
         pattern1 = r"pot([\d.]+):\s*([\d.]+)"
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
-        cell_match = re.search(pattern1, data)
-        temp_match = re.search(pattern2, data)
+        pot_match = re.findall(pattern1, data)
+        temp_match = re.findall(pattern2, data)
 
-        if cell_match:
+        if pot_match:
+            for match in pot_match:
             # print("\npattern1 matched. \n")
-            cell_num = int(cell_match.group(1))
-            cell_value = float(cell_match.group(2))
-            self.handle_set_voltage_range((cell_num - 1) * 8, (cell_num - 1) * 8 + 8, cell_value)
+                cell_num = int(match.group(1))
+                cell_value = float(match.group(2))
+                self.handle_set_pot(cell_num, cell_value)
         if temp_match:
+            for match in temp_match:
             #print("\npattern2 matched. \n")
-            temp_num = int(temp_match.group(1))
-            temp_value = float(temp_match.group(2))
-            self.handle_change_coolant(temp_num, temp_value)
-        else:
-            pass
+                temp_num = int(match.group(1))
+                temp_value = float(match.group(2))
+                self.handle_change_coolant(temp_num, temp_value)
+        
             #print("\nDID not match. data read is: \n", data)
     
     def handle_set_voltage_range(self, start, end, volt):
