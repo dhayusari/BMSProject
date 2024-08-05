@@ -35,7 +35,7 @@ class Data(QObject):
     updateTemps = pyqtSignal(bool)
     pwmChanged = pyqtSignal(bool)
     updateDTC = pyqtSignal(str, int)
-    updatePot = pyqtSignal(int, int)
+    updatePot = pyqtSignal(int, float)
 
     def __init__(self):
         super().__init__()

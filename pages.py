@@ -150,15 +150,15 @@ class Voltages(QMainWindow):
             high = self.model.calc_volt['Max_Cell']
             self.high_volt.setText(str(high[1]))
             self.high_loc.setText(str(high[0]+ 1))
-            data_high = "Max Cell: " + "("+ str(high[0])+","+ str(high[1]) + ")"
+            data_high = "MaxCell: " + "("+ str(high[0])+","+ str(high[1]) + ")"
             self.controller.send_data(data_high)
             low = self.model.calc_volt['Min_Cell']
             self.low_volt.setText(str(low[1]))
             self.low_loc.setText(str(low[0] + 1))
-            data_low = "Min Cell: " + "("+ str(low[0])+","+ str(low[1]) + ")"
+            data_low = "MinCell: " + "("+ str(low[0])+","+ str(low[1]) + ")"
             self.controller.send_data(data_low)
             self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
-            data_avg = "Average Volt: " + str(self.model.calc_volt['Average_Cell'])
+            data_avg = "AverageVolt: " + str(self.model.calc_volt['Average_Cell'])
             self.controller.send_data(data_avg)
     
     def set_button(self):
