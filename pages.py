@@ -287,7 +287,7 @@ class Temperatures(QMainWindow):
             self.min_temp.setText(str(low[1]))
             self.min_temp_loc.setText(str(low[0] + 1))
             data_low = "Min Temp: " + "("+ str(high[0])+","+ str(high[1]) + ")"
-            self.controller.send_data(data_high)
+            self.controller.send_data(data_low)
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
             data_avg = "Average Temp: " + str(self.model.calc_temps['Average_Temp'])
             self.controller.send_data(data_avg)
@@ -319,7 +319,7 @@ class Routines(QWidget):
         self.controller = controller
         self.model = model
 
-        layout = QVBoxLayout()
+        self.layout = QVBoxLayout()
         layout1 = QGridLayout()
         self.routine_label = QLabel("Input Routine")
         self.label = QLabel("If there is a space in the routine, use and underscore(_)")
@@ -335,29 +335,41 @@ class Routines(QWidget):
         self.hv_cur_fa = QLineEdit()
         self.set_current_fa = QPushButton("Set")
 
-        layout1.addWidget(self.routine_label, 3, 0)
-        layout1.addWidget(self.routine, 3, 1)
-        layout1.addWidget(self.send, 3, 2)
+        self.hv_cur_sec_lbl = QLabel("HV Current Secondary")
+        self.hv_cur_sec = QLineEdit()
+        self.set_current_sec = QPushButton("Set")
+        
         layout1.addWidget(self.label, 0, 0)
         layout1.addWidget(self.pwm_edit, 0, 1)
         layout1.addWidget(self.hv_cur_pri_lbl, 1, 0)
         layout1.addWidget(self.hv_cur_pri, 1, 1)
         layout1.addWidget(self.set_current_pri, 1, 2)
-        layout1.addWidget(self.hv_cur_fa_lbl, 2, 0)
-        layout1.addWidget(self.hv_cur_fa, 2, 1)
-        layout1.addWidget(self.set_current_fa, 2, 2)
-    
-
+        layout1.addWidget(self.hv_cur_sec_lbl, 2, 0)
+        layout1.addWidget(self.hv_cur_sec, 2, 1)
+        layout1.addWidget(self.set_current_sec, 2, 2)
+        layout1.addWidget(self.hv_cur_fa_lbl, 3, 0)
+        layout1.addWidget(self.hv_cur_fa, 3, 1)
+        layout1.addWidget(self.set_current_fa, 3, 2)
+        layout1.addWidget(self.routine_label, 4, 0)
+        layout1.addWidget(self.routine, 4, 1)
+        layout1.addWidget(self.send, 4, 2)
+        
         self.set_current_pri.clicked.connect(self.send_current_prim)
-        self.set_current_pri.clicked.connect(self.send_current_fa)
+        self.set_current_fa.clicked.connect(self.send_current_fa)
+        self.set_current_sec.clicked.connect(self.send_current_sec)
         self.send.clicked.connect(self.send_routine)
         
         self.controller.model.pwmChanged.connect(self.update_pwm)
+
+        #DTC part
+        dtc_label = QLabel("DTCs")
+        self.controller.model.updateDTC.connect(self.produce_dtc)
         
-        layout.addLayout(layout1)
-        layout.addWidget(self.label)
-        self.setLayout(layout)
-    
+        self.layout.addLayout(layout1)
+        self.layout.addWidget(dtc_label)
+        self.setLayout(self.layout)
+
+
     def send_routine(self):
         data = "Routine " + self.routine.text()
         self.controller.send_data(data)
@@ -366,6 +378,10 @@ class Routines(QWidget):
         data = "HV_current_Pri:" + self.hv_cur_pri.text()
         self.controller.send_data(data)
     
+    def send_current_sec(self):
+        data = "HV_current_Sec:" + self.hv_cur_sec.text()
+        self.controller.send_data(data)
+
     def send_current_fa(self):
         data = "HV_current_Pri_FA:" + self.hv_cur_fa.text()
         self.controller.send_data(data)
@@ -375,4 +391,14 @@ class Routines(QWidget):
             self.pwm_edit.setText("Connected")
         else:
             self.pwm_edit.setText("Disconnected")
+    
+    def produce_dtc(self, state):
+        if state:
+            layout = QGridLayout()
+            for code in self.model.dtc.keys():
+                code_label = QLabel(text=code)
+                desc = self.model.dtc[code]
+                layout.addWidget(code_label, 0, 0)
+                layout.addWidget(desc, 0, 1)
+            self.layout.addLayout(layout)
         
