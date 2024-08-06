@@ -71,34 +71,48 @@ class Data(QObject):
     def update_module(self, cell_num):
         module = cell_num // 8
         print("Module ", str(module + 1), " Updated!")
-        average = sum(self.voltages[cell_num:cell_num + 8]) / 8
+        average = sum(self.voltages[module*8:module*8 + 8]) / 8  # Fixed range
         self.module[str(module + 1)] = average
 
         min_volt = 6
         max_volt = 0
-        #change min & max of voltage
         for module in self.module.keys():
             volt = self.module[module]
             if volt <= min_volt:
                 self.calc_volt['Lowest_Module_Volt'] = [int(module), volt]
-            elif volt >= max_volt:
-                self.calc_volt['Highest_Module_Volt'] = [int(module, volt)]
-    
+            if volt >= max_volt:  # Changed to if to fix the logic
+                self.calc_volt['Highest_Module_Volt'] = [int(module), volt]  # Fixed assignment
+
     def change_voltage(self, cell_num, volt):
         print("Changed Cell Voltage:", cell_num + 1)
         self.voltages[cell_num] = volt
         self.voltageChanged.emit(cell_num, volt)
         self.update_module(cell_num)
         self.update_calc_volt()
-    
+
     def set_range_voltage(self, start, end, volt):
         print("Change Voltage Cell Range")
         print("Start Range: ", start)
         print("End Range: ", end)
-        for i in range(start - 1, end - 1, 1):
+        for i in range(start - 1, end):
             print("Changed Cell Voltage:", i + 1)
             self.voltages[i] = volt
             self.voltageChanged.emit(i, volt)
+            self.update_module(i)
+        self.update_calc_volt()  # Call once after all changes are done
+
+    def update_calc_volt(self):
+        min_val = min(self.voltages)
+        min_id = self.voltages.index(min_val)
+        self.calc_volt['Min_Cell'] = [min_id, min_val]
+        
+        max_val = max(self.voltages)
+        max_id = self.voltages.index(max_val)
+        self.calc_volt['Max_Cell'] = [max_id, max_val]
+        
+        avg_volt = sum(self.voltages) / len(self.voltages)
+        self.calc_volt['Average_Cell'] = avg_volt
+        self.updateVoltages.emit(True)
     
     def change_temp(self, temp_num, temp):
         print("Changed Temp Number: ", temp_num + 1)
@@ -125,20 +139,6 @@ class Data(QObject):
         for i in range(num*8, num*8 + 8, 1):
             self.pot[i] = volt
         self.updatePot.emit(num, volt)
-
-    def update_calc_volt(self):
-        #finding min
-        min_val = min(self.voltages)
-        min_id = self.voltages.index(min_val)
-        self.calc_volt['Min_Cell'] = [min_id, min_val]
-        #finding max
-        max_val = max(self.voltages)
-        max_id = self.voltages.index(max_val)
-        self.calc_volt['Max_Cell'] = [max_id, max_val]
-        #finding average
-        avg_volt = sum(self.voltages) / len(self.voltages)
-        self.calc_volt['Average_Cell'] = avg_volt
-        self.updateVoltages.emit(True)
     
     def update_calc_temp(self):
         #finding min

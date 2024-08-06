@@ -208,7 +208,7 @@ class Relay(QWidget):
 
     def precharge_routine(self, checked):
         if checked:
-            self.controller.send_data("Precharge: 1")
+            self.controller.send_data("Precharge:1")
         
     
     def update_precharge(self, state):

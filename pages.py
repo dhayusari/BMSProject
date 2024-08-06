@@ -12,6 +12,7 @@ class Voltages(QMainWindow):
         self.setWindowTitle("Temperatures")
         self.controller = controller
         self.model = model
+        self.is_changing_input = False
         self.start = 0
         self.end = 0
         self.volt = 0
@@ -178,14 +179,22 @@ class Voltages(QMainWindow):
         self.module_volt.setText(str(voltage))
     
     def change_input(self, checked):
+        if self.is_changing_input:
+            return
+        self.is_changing_input = True
+        print("change_input called, checked:", checked)
+
         if checked:
             self.laptop_btn.setChecked(False)
             for i, val in enumerate(self.model.pot):
+                print(f"Setting voltage for cell {i} to {val}")
                 self.controller.handle_change_voltage(i, val)
+        
+        self.is_changing_input = False
     
     def update_pot(self, id, val):
         if self.pot_btn.isChecked():
-            self.controller.handle_set_pot(id-1, val)
+            self.controller.handle_set_pot(id, val)
 
     def stop_read(self, checked):
         if checked:
