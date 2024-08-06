@@ -1,5 +1,6 @@
 # app.py
 import sys
+import queue
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -9,17 +10,31 @@ from pages import Voltages, Temperatures, Relays, Routines
 
 class Worker(QThread):
     data_received = pyqtSignal(str)
+    data_ready = pyqtSignal()
 
     def __init__(self, serial_port):
         super().__init__()
         self.serial_port = serial_port
         self._running = True
+        self.queue = queue.Queue()
+        self.mutex = QMutex()
+    
+    def enqueue_data(self, data):
+        self.queue.put(data)
+        self.data_ready.emit()
 
     def run(self):
         while self._running:
             if self.serial_port.in_waiting > 0:
                 data = self.serial_port.readline().decode('utf-8', errors='replace').strip()
                 self.data_received.emit(data)
+
+            if not self.queue.empty():
+                self.mutex.lock()
+                try:
+                    self.serial_port.write((data + '\n').encode('utf-8'))
+                finally:
+                    self.mutex.unlock()
 
 
     def stop(self):
@@ -193,17 +208,14 @@ class Data(QObject):
 
 
 class Controller:
-    def _init_(self, model):
+    def __init__(self, model):
         self.model = model
         self.serial_port = serial.Serial('com11', 115200, timeout=1)
         self.worker = Worker(self.serial_port)
         self.worker.data_received.connect(self.read_data)
         self.worker.start()
-        self.mutex = QMutex()
-        self.queue = QQueue()
         self.timer = QTimer()
         self.timer.setInterval(50)  # Set an appropriate interval (in milliseconds)
-        self.timer.timeout.connect(self.process_queue)
         self.timer.start()
 
     def _del_(self):
@@ -212,18 +224,8 @@ class Controller:
         self.serial_port.close()
 
     def send_data(self, data):
-        print("Queueing data: ", data)
-        self.queue.enqueue(data)
+        self.worker.enqueue_data(data)
 
-    def process_queue(self):
-        if not self.queue.isEmpty():
-            data = self.queue.dequeue()
-            print("Data being sent: ", data)
-            self.mutex.lock()
-            try:
-                self.serial_port.write((data + '\n').encode('utf-8'))
-            finally:
-                self.mutex.unlock()
 
     def read_data(self, data):
         print("Reading data: ", data)
