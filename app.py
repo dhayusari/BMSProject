@@ -202,7 +202,11 @@ class Controller:
 
     def send_data(self, data):
         print("Data being sent: ", data)
-        self.serial_port.write((data + '\n').encode('utf-8'))
+        self.mutex.lock()  # Lock the mutex before sending data
+        try:
+            self.serial_port.write((data + '\n').encode('utf-8'))
+        finally:
+            self.mutex.unlock()  # Unlock the mutex after data is sent
     
     def read_data(self, data):
         print("Reading data: ", data)

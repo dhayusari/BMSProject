@@ -185,7 +185,7 @@ class Voltages(QMainWindow):
     
     def update_pot(self, id, val):
         if self.pot_btn.isChecked():
-            self.controller.handle_change_voltage(id - 1, val)
+            self.controller.handle_set_pot(id-1, val)
 
     def stop_read(self, checked):
         if checked:
