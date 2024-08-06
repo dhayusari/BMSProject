@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
+
 
 /* USER CODE END Includes */
 
@@ -90,6 +92,8 @@ int P1C00_flag = 0;
 int P1A9B_flag = 0;
 int P0A7E_flag = 0;
 int P1A9A_flag = 0;
+int P29FF_flag = 0;
+
 
 
 int P0CA7_demature = 0;
@@ -118,6 +122,7 @@ static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 void print_char(uint32_t num_var);
+void ManualDelay(volatile uint32_t nCount);
 
 /* USER CODE END PFP */
 
@@ -157,7 +162,6 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 high_time = (falling_edge >= rising_edge1) ? (falling_edge - rising_edge1) : ((0xFFFF - rising_edge1) + falling_edge + 1);
                 duty_cycle = (100 * high_time) / period;
 
-                // Print frequency and duty cycle
 
                 if((freq >=82 && freq <= 94) && (duty_cycle >= 47 && duty_cycle <= 53))
                 {
@@ -333,7 +337,22 @@ void process_message(void) {
 						max_temp = value;
 						sprintf(buffer, "Updated max_temp %lf\n", value);
 						HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-		}
+		        }
+		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
+		            	string = value;
+		            	P1C01_flag = 0;
+		            	P1C00_flag = 0;
+		            	P0A7E_flag = 0;
+		            	P29FF_flag = 0;
+		            	sprintf(buffer, "DTC P1C01 Demature, DTC P0A7E Demature, and DTC P1C00 Demature\n");
+		            	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
+		        		string = value;
+		        		P0CA7_flag = 0;
+		        		sprintf(buffer, "DTC P0CA7 Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
 		else if (sscanf(token, "HV_current_Pri:%lf", &value) == 1) {
 				pri_current = value;
 				sprintf(buffer, "Updated HV_current_Pri %lf\n", pri_current);
@@ -350,20 +369,20 @@ void process_message(void) {
 				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
 
-		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
-				string = value;
-				P1C01_flag = 0;
-				P1C00_flag = 0;
-				P0A7E_flag = 0;
-				sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
-				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-		}
-		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
-				string = value;
-				P0CA7_flag = 0;
-				sprintf(buffer, "P0CA7 demature is set manually\n");
-				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-		}
+//		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
+//				string = value;
+//				P1C01_flag = 0;
+//				P1C00_flag = 0;
+//				P0A7E_flag = 0;
+//				sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
+//				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//		}
+//		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
+//				string = value;
+//				P0CA7_flag = 0;
+//				sprintf(buffer, "P0CA7 demature is set manually\n");
+//				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//		}
         else {
             snprintf(buffer, 256, "Failed to parse token: %s\n", token);
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
@@ -403,45 +422,45 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
         HAL_UART_Receive_IT(&huart2, (uint8_t *)&received_char, 1);
     }
 }
-
-void P0CA7(void)
-{
-	int P0CA7_condition_met = 0;
-
-	if(pri_current >= 1350 || pri_current <= -1350){
-		P0CA7_condition_met = 1;
-	}
-
-		static uint32_t start_time;
-		static uint8_t P0CA7_flag = 0; //static: it initializes only once. then retains its value for all future func calls.
-		char buffer[100];
-
-		if(P0CA7_condition_met){
-			if(!P0CA7_flag){
-				//first time entering the condition.
-				start_time = HAL_GetTick();
-				P0CA7_flag = 1;
-				sprintf(buffer, "P0CA7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
-				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-			}else{
-
-			     uint32_t current_time = HAL_GetTick();
-				 float elapsed_time = (float)(current_time - start_time) / 1000.0;
-
-			     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
-				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-
-				 if(elapsed_time >= 0.5){
-					 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7\n", 6, 100);
-				 }
-			}
-		}
-		else{
-			 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7 DEMATURE.\n", sizeof(buffer) - 1, 100);
-
-		}
-
-}
+//
+//void P0CA7(void)
+//{
+//	int P0CA7_condition_met = 0;
+//
+//	if(pri_current >= 1350 || pri_current <= -1350){
+//		P0CA7_condition_met = 1;
+//	}
+//
+//		static uint32_t start_time;
+//		static uint8_t P0CA7_flag = 0; //static: it initializes only once. then retains its value for all future func calls.
+//		char buffer[100];
+//
+//		if(P0CA7_condition_met){
+//			if(!P0CA7_flag){
+//				//first time entering the condition.
+//				start_time = HAL_GetTick();
+//				P0CA7_flag = 1;
+//				sprintf(buffer, "P0CA7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+//				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//			}else{
+//
+//			     uint32_t current_time = HAL_GetTick();
+//				 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+//
+//			     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+//				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//
+//				 if(elapsed_time >= 0.5){
+//					 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7\n", 6, 100);
+//				 }
+//			}
+//		}
+//		else{
+//			 HAL_UART_Transmit(&huart2, (uint8_t*)"P0CA7 DEMATURE.\n", sizeof(buffer) - 1, 100);
+//
+//		}
+//
+//}
 
 void P0DE7(void) {
 	int P0DE7_condition_met = 0;
@@ -453,24 +472,29 @@ void P0DE7(void) {
 
 	static uint32_t start_time;
 	static uint8_t P0DE7_flag = 0;
-	char buffer[100];
+	char buffere7[100];
+	static int test_flag = 0;
 
 	if(P0DE7_condition_met){
 		if(!P0DE7_flag){
 			start_time = HAL_GetTick();
 			P0DE7_flag = 1;
-			sprintf(buffer, "P0DE7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
-			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+			sprintf(buffere7, "P0DE7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+			HAL_UART_Transmit(&huart2, (uint8_t*)buffere7, strlen(buffere7), 100);
 		}else{
 
 		     uint32_t current_time = HAL_GetTick();
 			 float elapsed_time = (float)(current_time - start_time) / 1000.0;
 
-		     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+		     sprintf(buffere7, "Elapsed Time P0DE7: %.2f seconds\n", elapsed_time);
 			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
+
+
 			 if(elapsed_time >= 3){
-				 HAL_UART_Transmit(&huart2, (uint8_t*)"P0DE7\n", 6, 100);
+				 sprintf(buffere7, "DTC P0DE7 Mature\n");
+				 test_flag = 1;
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffere7, strlen(buffere7), 100);
 			 }
 		}
 	}else{
@@ -479,10 +503,14 @@ void P0DE7(void) {
 				all_cells_below_threshold = 0;
 			}
 
-		if(all_cells_below_threshold){
+		if(!all_cells_below_threshold){
 			P0DE7_flag = 0;
-            sprintf(buffer, "All cells below threshold, P0DE7 reset.\n");
-            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+			if(test_flag == 1)
+			{
+				sprintf(buffer, "DTC P0DE7 Demature.\n");
+				test_flag = 0;
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+			}
 		}
 	}
 }
@@ -512,7 +540,8 @@ void P1C01(void){
 				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 				 if(elapsed_time >= 4){
-					 HAL_UART_Transmit(&huart2, (uint8_t*)"P1C01\n", 6, 100);
+					 sprintf(buffer, "DTC P1C01 Mature\n");
+					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 				 }
 			}
 		}
@@ -531,18 +560,19 @@ void P0DE6(void) {
 		if(!P0DE6_flag){
 			start_time = HAL_GetTick();
 			P0DE6_flag = 1;
-			sprintf(buffer, "P0DE6 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+			sprintf(buffer, "\nP0DE6 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
 			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}else{
 
 		     uint32_t current_time = HAL_GetTick();
 			 float elapsed_time = (float)(current_time - start_time) / 1000.0;
 
-		     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+		     sprintf(buffer, "\nElapsed Time: %.2f seconds\n", elapsed_time);
 			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 			 if(elapsed_time >= 4){
-				 HAL_UART_Transmit(&huart2, (uint8_t*)"P0DE6\n", 6, 100);
+				 sprintf(buffer, "\nDTC P0DE6 Mature.\n");
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 			 }
 		}
 	}else{
@@ -550,9 +580,9 @@ void P0DE6(void) {
 			if(min_cell < 2.9){
 				all_cells_below_threshold = 0;
 			}
-		if(all_cells_below_threshold){
+		if(!all_cells_below_threshold){
 			P0DE6_flag = 0;
-            sprintf(buffer, "All cells below threshold, P0DE6 reset.\n");
+            sprintf(buffer, "\nDTC P0DE6 Demature.\n");
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
 	}
@@ -571,18 +601,19 @@ void P1C00(void) {
 		if(!P1C00_flag){
 			start_time = HAL_GetTick();
 			P1C00_flag = 1;
-			sprintf(buffer, "P1C00 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+			sprintf(buffer, "\nP1C00 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
 			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}else{
 
 		     uint32_t current_time = HAL_GetTick();
 			 float elapsed_time = (float)(current_time - start_time) / 1000.0;
 
-		     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+		     sprintf(buffer, "\nElapsed Time: %.2f seconds\n", elapsed_time);
 			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 			 if(elapsed_time >= 3){
-				 HAL_UART_Transmit(&huart2, (uint8_t*)"P1C00\n", 6, 100);
+				 sprintf(buffer, "\nDTC P1C00 Mature\n");
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 			 }
 		}
 	}
@@ -614,7 +645,8 @@ void P1A9B(void) {
 			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 			 if(elapsed_time >= 3){
-				 HAL_UART_Transmit(&huart2, (uint8_t*)"P1A9B\n", 6, 100);
+				 sprintf(buffer, "\nDTC P1A9B Mature\n");
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 			 }
 		}
 	}else{
@@ -622,9 +654,9 @@ void P1A9B(void) {
 			if(max_temp < 55){
 				all_cells_below_threshold = 0;
 			}
-		if(all_cells_below_threshold){
+		if(!all_cells_below_threshold){
 			P1A9B_flag = 0;
-            sprintf(buffer, "All cells below threshold, P1A9B reset.\n");
+            sprintf(buffer, "DTC P1A9B Demature.\n");
             HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 		}
 	}
@@ -655,10 +687,245 @@ void P0A7E(void) {
 			 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 			 if(elapsed_time >= 4){
-				 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A7E\n", 6, 100);
+				 sprintf(buffer, "DTC P0A7E Mature\n");
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 			 }
 		}
 	}
+}
+
+void P0CA7(void)
+{
+	int P0CA7_condition_met = 0;
+
+	static uint32_t start_time;
+	static uint8_t P0CA7_flag = 0;
+	char buffer[100];
+
+	if((pri_current >= 1350 || pri_current <= -1350) || (pri_current_fa = 1 && sec_current >= 1350))
+	{
+		P0CA7_condition_met = 1;
+	}
+
+		if(P0CA7_condition_met){
+			if(!P0CA7_flag){
+				//first time entering the condition.
+				start_time = HAL_GetTick();
+				P0CA7_flag = 1;
+				sprintf(buffer, "P0CA7 condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+			}else{
+
+			     uint32_t current_time = HAL_GetTick();
+				 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+
+			     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+				 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+				 if(elapsed_time >= 0.5){
+					 sprintf(buffer, "DTC P0CA7 Mature\n");
+					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+				 }
+			}
+		}
+}
+
+//void P0A0B (void)
+//{
+//	int P0A0B_condition_met = 0;
+//
+//		static uint32_t start_time;
+//		static uint8_t P0A0B_flag = 0;
+//		char buffer[100];
+//
+//		if(freq < 83 || duty_cycle > 55)
+//		{
+//			P0A0B_condition_met = 1;
+//		}
+//
+//			if(P0A0B_condition_met){
+//				if(!P0A0B_flag){
+//					//first time entering the condition.
+//					start_time = HAL_GetTick();
+//					P0A0B_flag = 1;
+//					sprintf(buffer, "P0A0B condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+//					HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//				}else{
+//
+//				     uint32_t current_time = HAL_GetTick();
+//					 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+//
+//				     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+//					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//
+//					 if(elapsed_time >= 0.5){
+//						 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A0B\n", 6, 100);
+//					 }
+//				}
+//			}
+//			else{
+//					int all_cells_below_threshold = 1;
+//						if(freq == 88 && duty_cycle == 50){
+//							all_cells_below_threshold = 0;
+//						}
+//					if(all_cells_below_threshold){
+//						P0A0B_flag = 0;
+//			            sprintf(buffer, "All cells below threshold, P0A0B reset.\n");
+//			            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//					}
+//				}
+//}
+
+void P0A0C (void)
+{
+	int P0A0C_condition_met = 0;
+
+		static uint32_t start_time;
+		static uint8_t P0A0C_flag = 0;
+		char buffer[100];
+
+		if(duty_cycle == 0)
+		{
+			P0A0C_condition_met = 1;
+		}
+
+			if(P0A0C_condition_met){
+				if(!P0A0C_flag){
+					//first time entering the condition.
+					start_time = HAL_GetTick();
+					P0A0C_flag = 1;
+					sprintf(buffer, "P0A0C condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+					HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+				}else{
+
+				     uint32_t current_time = HAL_GetTick();
+					 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+
+				     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+					 if(elapsed_time >= 0.5){
+						 sprintf(buffer, "DTC P0A0C Mature\n");
+						 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+					 }
+				}
+			}
+			else{
+					int all_cells_below_threshold = 1;
+						if(duty_cycle == 50){
+							all_cells_below_threshold = 0;
+						}
+					if(!all_cells_below_threshold){
+						P0A0C_flag = 0;
+			            sprintf(buffer, "DTC P0A0C Demature.\n");
+			            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+					}
+				}
+}
+
+
+//void P0A0D (void)
+//{
+//	int P0A0D_condition_met = 0;
+//
+//		static uint32_t start_time;
+//		static uint8_t P0A0D_flag = 0;
+//		char buffer[100];
+//
+//		if(duty_cycle == 100)
+//		{
+//			P0A0D_condition_met = 1;
+//		}
+//
+//			if(P0A0D_condition_met){
+//				if(!P0A0D_flag){
+//					//first time entering the condition.
+//					start_time = HAL_GetTick();
+//					P0A0D_flag = 1;
+//					sprintf(buffer, "P0A0D condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+//					HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//				}else{
+//
+//				     uint32_t current_time = HAL_GetTick();
+//					 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+//
+//				     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+//					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//
+//					 if(elapsed_time >= 0.5){
+//						 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A0D\n", 6, 100);
+//					 }
+//				}
+//			}
+//			else{
+//					int all_cells_below_threshold = 1;
+//						if(duty_cycle == 50){
+//							all_cells_below_threshold = 0;
+//						}
+//					if(all_cells_below_threshold){
+//						P0A0D_flag = 0;
+//			            sprintf(buffer, "All cells below threshold, P1A9B reset.\n");
+//			            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//					}
+//				}
+//}
+
+void P29FF(void) {
+    int P29FF_condition_met = 0;
+    static uint32_t start_time;
+    static uint8_t P29FF_flag = 0;
+    char buffer[256];
+    int size = 50;
+
+    if (min_cell < 2.1)
+    {
+        for (int i = 0; i < size - 1; i++)
+        {
+            for (int j = i + 1; j < size; j++)
+            {
+                if (fabs(tempValues[i] - tempValues[j]) == 2)
+                {
+                    P29FF_condition_met = 1;
+                    break; // Exit the inner loop if condition is met
+                }
+            }
+            if (P29FF_condition_met)
+            {
+                break; // Exit the outer loop if condition is met
+            }
+        }
+    }
+
+    if (P29FF_condition_met)
+    {
+        if (!P29FF_flag)
+        {
+            start_time = HAL_GetTick();
+            P29FF_flag = 1;
+            sprintf(buffer, "P29FF condition met, Start_time set: %.2f s\n", (float)start_time / 1000.0);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+        }
+
+        else
+        {
+            uint32_t current_time = HAL_GetTick();
+            float elapsed_time = (float)(current_time - start_time) / 1000.0;
+
+            sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+            if (elapsed_time >= 600)
+            {
+            	sprintf(buffer, "DTC P29FF Mature\n");
+            	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+            }
+        }
+    }
+
+    else
+    {
+        P29FF_flag = 0;
+    }
 }
 
 void display_values(void) {
@@ -743,6 +1010,8 @@ int main(void)
       P1A9B();
       P0A7E();
       P0CA7();
+      P29FF();
+      HAL_Delay(1000);
 
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcResultsDMA, adcChannelCount);
 	  while(adcConversionCplt ==0)
