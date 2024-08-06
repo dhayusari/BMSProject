@@ -1,6 +1,7 @@
 # app.py
 import sys
 import queue
+import logging
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
 from PyQt6.QtWidgets import *
@@ -8,6 +9,8 @@ import serial
 import re
 from pages import Voltages, Temperatures, Relays, Routines
 
+#set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 class Worker(QThread):
     data_received = pyqtSignal(str)
     data_ready = pyqtSignal()
@@ -20,12 +23,15 @@ class Worker(QThread):
         self.mutex = QMutex()
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_queue)
+        self.data_ready.connect(self.process_queue)
 
     def enqueue_data(self, data):
+        logging.debug(f"Enqueueing data: {data}")
         self.queue.put(data)
         self.data_ready.emit()
 
     def run(self):
+        logging.debug(f"Worker thread started")
         self.timer.start(10)  # Process the queue every 10 milliseconds
         while self._running:
             if self.serial_port.in_waiting > 0:
@@ -37,11 +43,18 @@ class Worker(QThread):
             self.mutex.lock()
             try:
                 data = self.queue.get()
-                self.serial_port.write((data + '\n').encode('utf-8'))
+                logging.debug(f"Processing data from queue: {data}")
+                data_to_send = (data + '\n').encode('utf-8')
+                logging.debug(f"Data to send (encoded): {data_to_send}")
+                self.serial_port.write(data_to_send)
+                logging.debug("Data sent succesfully")
+            except Exception as e:
+                logging.error(f"Error while processing queue: {e}")
             finally:
                 self.mutex.unlock()
 
     def stop(self):
+        logging.debug("Stopping worker thread")
         self._running = False
         self.timer.stop()
         self.wait()
@@ -91,7 +104,7 @@ class Data(QObject):
     
     def update_module(self, cell_num):
         module = cell_num // 8
-        print("Module ", str(module + 1), " Updated!")
+        #print("Module ", str(module + 1), " Updated!")
         average = sum(self.voltages[module*8:module*8 + 8]) / 8  # Fixed range
         self.module[str(module + 1)] = average
 
@@ -99,9 +112,9 @@ class Data(QObject):
         max_volt = 0
         for module in self.module.keys():
             volt = self.module[module]
-            if volt <= min_volt:
+            if volt < min_volt:
                 self.calc_volt['Lowest_Module_Volt'] = [int(module), volt]
-            if volt >= max_volt:  # Changed to if to fix the logic
+            if volt > max_volt:  # Changed to if to fix the logic
                 self.calc_volt['Highest_Module_Volt'] = [int(module), volt]  # Fixed assignment
 
     def change_voltage(self, cell_num, volt):
@@ -120,16 +133,20 @@ class Data(QObject):
             self.voltages[i] = volt
             self.voltageChanged.emit(i, volt)
             self.update_module(i)
-        self.update_calc_volt()  # Call once after all changes are done
 
     def update_calc_volt(self):
         min_val = min(self.voltages)
         min_id = self.voltages.index(min_val)
-        self.calc_volt['Min_Cell'] = [min_id, min_val]
+        curr_min = self.calc_volt['Min_Cell']
+        if min_val != curr_min[1]:
+            self.calc_volt['Min_Cell'] = [min_id, min_val]
         
+        curr_max = self.calc_volt['Max_Cell']
+    
         max_val = max(self.voltages)
         max_id = self.voltages.index(max_val)
-        self.calc_volt['Max_Cell'] = [max_id, max_val]
+        if max_val != curr_max[1]:
+            self.calc_volt['Max_Cell'] = [max_id, max_val]
         
         avg_volt = sum(self.voltages) / len(self.voltages)
         self.calc_volt['Average_Cell'] = avg_volt
@@ -216,7 +233,7 @@ class Data(QObject):
 class Controller:
     def __init__(self, model):
         self.model = model
-        self.serial_port = serial.Serial('com11', 115200, timeout=1)
+        self.serial_port = serial.Serial('com11', 9600, timeout=1)
         self.worker = Worker(self.serial_port)
         self.worker.data_received.connect(self.read_data)
         self.worker.start()
