@@ -18,28 +18,34 @@ class Worker(QThread):
         self._running = True
         self.queue = queue.Queue()
         self.mutex = QMutex()
-    
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.process_queue)
+
     def enqueue_data(self, data):
         self.queue.put(data)
         self.data_ready.emit()
 
     def run(self):
+        self.timer.start(10)  # Process the queue every 10 milliseconds
         while self._running:
             if self.serial_port.in_waiting > 0:
                 data = self.serial_port.readline().decode('utf-8', errors='replace').strip()
                 self.data_received.emit(data)
-
-            if not self.queue.empty():
-                self.mutex.lock()
-                try:
-                    self.serial_port.write((data + '\n').encode('utf-8'))
-                finally:
-                    self.mutex.unlock()
-
+        
+    def process_queue(self):
+        if not self.queue.empty():
+            self.mutex.lock()
+            try:
+                data = self.queue.get()
+                self.serial_port.write((data + '\n').encode('utf-8'))
+            finally:
+                self.mutex.unlock()
 
     def stop(self):
         self._running = False
+        self.timer.stop()
         self.wait()
+
 
 class Data(QObject):
     voltageChanged = pyqtSignal(int, float)
@@ -214,18 +220,14 @@ class Controller:
         self.worker = Worker(self.serial_port)
         self.worker.data_received.connect(self.read_data)
         self.worker.start()
-        self.timer = QTimer()
-        self.timer.setInterval(50)  # Set an appropriate interval (in milliseconds)
-        self.timer.start()
 
-    def _del_(self):
+    def __del__(self):
         self.worker.stop()
         print("Worker has stopped")
         self.serial_port.close()
 
     def send_data(self, data):
         self.worker.enqueue_data(data)
-
 
     def read_data(self, data):
         print("Reading data: ", data)
