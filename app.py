@@ -93,6 +93,10 @@ class Data(QObject):
         self.relays = [0] * 5 #initially open
         self.coolant = [0] * 2
         self.pwm = 0
+        self.pwm_desc = {
+            'Frequency': 0,
+            'Duty_Cycle': 0
+        }
         self.dtc = {}
     
     def calculate_module(self):
@@ -288,7 +292,9 @@ class Controller:
             if pwm_match.group(1) == "Disconnected":
                 self.model.change_pwm(0)
         if duty_match:
-            
+            self.model.pwm_desc['Duty_Cycle'] = duty_match.group(1)
+        if freq_match:
+            self.model.pwm_desc['Frequency'] = freq_match.group(1)
 
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)

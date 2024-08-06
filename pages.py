@@ -359,6 +359,10 @@ class Routines(QWidget):
         self.send = QPushButton("Send")
         self.label = QLabel("PWM")
         self.pwm_edit = QLineEdit("")
+        self.duty_label = QLabel("Duty Cycle")
+        self.duty_edit = QLineEdit("")
+        self.freq_label = QLabel("Frequency")
+        self.freq_edit = QLineEdit("")
 
         self.hv_cur_pri_lbl = QLabel("HV Current Primary")
         self.hv_cur_pri = QLineEdit()
@@ -373,18 +377,22 @@ class Routines(QWidget):
         
         layout1.addWidget(self.label, 0, 0)
         layout1.addWidget(self.pwm_edit, 0, 1)
-        layout1.addWidget(self.hv_cur_pri_lbl, 1, 0)
-        layout1.addWidget(self.hv_cur_pri, 1, 1)
-        layout1.addWidget(self.set_current_pri, 1, 2)
-        layout1.addWidget(self.hv_cur_sec_lbl, 2, 0)
-        layout1.addWidget(self.hv_cur_sec, 2, 1)
-        layout1.addWidget(self.set_current_sec, 2, 2)
-        layout1.addWidget(self.hv_cur_fa_lbl, 3, 0)
-        layout1.addWidget(self.hv_cur_fa, 3, 1)
-        layout1.addWidget(self.set_current_fa, 3, 2)
-        layout1.addWidget(self.routine_label, 4, 0)
-        layout1.addWidget(self.routine, 4, 1)
-        layout1.addWidget(self.send, 4, 2)
+        layout1.addWidget(self.duty_label, 1, 0)
+        layout1.addWidget(self.duty_edit, 1, 1)
+        layout1.addWidget(self.freq_label, 2, 0)
+        layout1.addWidget(self.freq_edit, 2, 1)
+        layout1.addWidget(self.hv_cur_pri_lbl, 3, 0)
+        layout1.addWidget(self.hv_cur_pri, 3, 1)
+        layout1.addWidget(self.set_current_pri, 3, 2)
+        layout1.addWidget(self.hv_cur_sec_lbl, 4, 0)
+        layout1.addWidget(self.hv_cur_sec, 4, 1)
+        layout1.addWidget(self.set_current_sec, 4, 2)
+        layout1.addWidget(self.hv_cur_fa_lbl, 5, 0)
+        layout1.addWidget(self.hv_cur_fa, 5, 1)
+        layout1.addWidget(self.set_current_fa, 5, 2)
+        layout1.addWidget(self.routine_label, 6, 0)
+        layout1.addWidget(self.routine, 6, 1)
+        layout1.addWidget(self.send, 6, 2)
         
         self.set_current_pri.clicked.connect(self.send_current_prim)
         self.set_current_fa.clicked.connect(self.send_current_fa)
@@ -425,6 +433,10 @@ class Routines(QWidget):
     def update_pwm(self, state):
         if state:
             self.pwm_edit.setText("Connected")
+            duty = self.model.pwm_desc['Duty_Cycle']
+            self.duty_edit.setText(str(duty))
+            freq = self.model.pwm_desc['Frequency']
+            self.freq_edit.setText(str(freq))
         else:
             self.pwm_edit.setText("Disconnected")
     
