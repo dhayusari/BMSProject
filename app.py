@@ -44,8 +44,8 @@ class Data(QObject):
         self.module = {}
         self.calculate_module()
         self.calc_volt = {
-            'Min_Cell': [0, 0],
-            'Max_Cell': [0,0],
+            'Min_Cell': 0,
+            'Max_Cell': 0,
             'Average_Cell': 0,
             'Highest_Module_Volt': [0,0],
             'Lowest_Module_Volt': [0,0]
@@ -156,32 +156,36 @@ class Data(QObject):
 
     def update_dtc(self, code, condition):
         if condition:
-            desc = ""
-            if code == "P0DE7":
-                desc = "Max Cell Voltage >= 4.25 V"
-            elif code == "P1C01":
-                desc = "Max Cell Voltage >= 4.35 V"
-            elif code == "P0DE6":
-                desc = "Min Cell Voltage <= 2.8 V"
-            elif code == "P1C00":
-                desc = "Min Cell Voltage <= 1.7 V"
-            elif code == "P1A9B":
-                desc = "Max Module Temp >= 58 C"
-            elif code == "P0A7E":
-                desc = "Max Module Temp >= 65 C"
-            elif code == "P1A9A":
-                desc = "MinTModule Temp <= -37"
-            elif code == "P0CA7":
-                desc = "HV Current Primary >= 1350 A, HV Current Primary FA is 1 and HV Current Secondary >= 1350 A, or HV Current Primary <= -1350 A"
-            elif code == "P0A0A":
-                desc = "HVIL circuit open"
-            elif code == "P0A0B":
-                desc = "HVIL Performance Low"
-            elif code == "P0A0C":
-                desc = "HVIL Circuit Low"
-            elif code == "P29FF":
-                desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
-            self.dtc[str(code)] = desc
+            if code in self.dtc.keys():
+                pass
+            else:
+                desc = ""
+                if code == "P0DE7":
+                    desc = "Max Cell Voltage >= 4.25 V"
+                elif code == "P1C01":
+                    desc = "Max Cell Voltage >= 4.35 V"
+                elif code == "P0DE6":
+                    desc = "Min Cell Voltage <= 2.8 V"
+                elif code == "P1C00":
+                    desc = "Min Cell Voltage <= 1.7 V"
+                elif code == "P1A9B":
+                    desc = "Max Module Temp >= 58 C"
+                elif code == "P0A7E":
+                    desc = "Max Module Temp >= 65 C"
+                elif code == "P1A9A":
+                    desc = "MinTModule Temp <= -37"
+                elif code == "P0CA7":
+                    desc = "HV Current Primary >= 1350 A, HV Current Primary FA is 1 and HV Current Secondary >= 1350 A, or HV Current Primary <= -1350 A"
+                elif code == "P0A0A":
+                    desc = "HVIL circuit open"
+                elif code == "P0A0B":
+                    desc = "HVIL Performance Low"
+                elif code == "P0A0C":
+                    desc = "HVIL Circuit Low"
+                elif code == "P29FF":
+                    desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
+                
+                self.dtc[str(code)] = desc
         else:
             del self.dtc[code]
         

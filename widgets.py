@@ -2,6 +2,19 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import QWidget, QSlider, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QPushButton, QDoubleSpinBox
 
+class DTC(QWidget):
+    def __init__(self, code, desc):
+        super().__init__()
+        layout = QGridLayout()
+        self.label = QLabel(text=code)
+        self.desc = QLabel(text=desc)
+
+        layout.addWidget(self.label, 0, 0)
+        layout.addWidget(self.desc, 0, 1)
+
+        self.setLayout(layout)
+
+
 class SpinBox(QWidget):
     def __init__(self, num, voltage, controller):
         super().__init__()

@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import QMainWindow, QScrollArea, QLabel, QWidget, QComboBox, QVBoxLayout, QHBoxLayout, QPushButton, QGridLayout, QLineEdit
 
-from widgets import TempModule, Relay, SpinBox
+from widgets import TempModule, Relay, SpinBox, DTC
 
 class Voltages(QMainWindow):
     def __init__(self, controller, model):
@@ -27,14 +27,17 @@ class Voltages(QMainWindow):
 
         # Setting all voltages
         self.label = QLabel("Set All Voltages")
-        self.volt_edit = QLineEdit()
+        self.all_volt_edit = QLineEdit()
         self.on_btn = QPushButton("Off")
-        self.set_btn = QPushButton("Set")
+        self.set_btn1 = QPushButton("Set")
+        self.on_btn.setCheckable(True)
 
         layout1.addWidget(self.label, 0, 0)
-        layout1.addWidget(self.volt_edit, 0, 1)
-        layout1.addWidget(self.set_btn, 0, 2)
+        layout1.addWidget(self.all_volt_edit, 0, 1)
+        layout1.addWidget(self.set_btn1, 0, 2)
         layout1.addWidget(self.on_btn, 0, 3)
+
+        self.set_btn1.clicked.connect(self.set_all)
 
         self.set_range_label = QLabel("Set Voltage based on Range")
         layout1.addWidget(self.set_range_label, 1, 0)
@@ -151,12 +154,12 @@ class Voltages(QMainWindow):
             high = self.model.calc_volt['Max_Cell']
             self.high_volt.setText(str(high[1]))
             self.high_loc.setText(str(high[0] + 1))
-            data_high = "MaxCell: " + "(" + str(high[0]) + "," + str(high[1]) + ")"
+            data_high = "MaxCell: " + str(high[1])
             self.controller.send_data(data_high)
             low = self.model.calc_volt['Min_Cell']
             self.low_volt.setText(str(low[1]))
             self.low_loc.setText(str(low[0] + 1))
-            data_low = "MinCell: " + "(" + str(low[0]) + "," + str(low[1]) + ")"
+            data_low = "MinCell: " + str(low[1])
             self.controller.send_data(data_low)
             self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
             data_avg = "AverageVolt: " + str(self.model.calc_volt['Average_Cell'])
@@ -172,6 +175,12 @@ class Voltages(QMainWindow):
         else:
             self.error_range_lbl.setText(" ")
             self.controller.handle_set_voltage_range(self.start, self.end, float(self.volt_edit.text()))
+    
+    def set_all(self):
+        volt = float(self.all_volt_edit.text())
+        if volt:
+            self.on_btn.setChecked(True)
+            self.controller.handle_set_voltage_range(0, 200, volt)
     
     def module_voltage(self):
         index = self.module.currentIndex() + 1
@@ -296,12 +305,12 @@ class Temperatures(QMainWindow):
             high = self.model.calc_temps['Max_Temp']
             self.max_temp.setText(str(high[1]))
             self.max_temp_loc.setText(str(high[0] + 1))
-            data_high = "MaxTemp:" + "("+ str(high[0])+","+ str(high[1]) + ")"
+            data_high = "MaxTemp:" + str(high[1])
             self.controller.send_data(data_high)
             low = self.model.calc_temps['Min_Temp']
             self.min_temp.setText(str(low[1]))
             self.min_temp_loc.setText(str(low[0] + 1))
-            data_low = "MinTemp:" + "("+ str(high[0])+","+ str(high[1]) + ")"
+            data_low = "MinTemp:" +  str(high[1])
             self.controller.send_data(data_low)
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
             data_avg = "AverageTemp:" + str(self.model.calc_temps['Average_Temp'])
@@ -382,6 +391,9 @@ class Routines(QWidget):
         
         self.layout.addLayout(layout1)
         self.layout.addWidget(dtc_label)
+
+        self.dtc_layout = QVBoxLayout()
+        self.layout.addLayout(self.dtc_layout)
         self.setLayout(self.layout)
 
 
@@ -409,11 +421,11 @@ class Routines(QWidget):
     
     def produce_dtc(self, state):
         if state:
-            layout = QGridLayout()
+            for i in reversed(range(self.dtc_layout.count())): 
+                self.dtc_layout.itemAt(i).widget().setParent(None)
             for code in self.model.dtc.keys():
                 code_label = QLabel(text=code)
                 desc = self.model.dtc[code]
-                layout.addWidget(code_label, 0, 0)
-                layout.addWidget(desc, 0, 1)
-            self.layout.addLayout(layout)
-        
+                dtc_widget = DTC(code_label, desc)
+
+                self.dtc_layout.addWidget(dtc_widget)
