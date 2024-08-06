@@ -284,16 +284,31 @@ void process_message(void) {
 		else if (sscanf(token, "Precharge:%d", &pc_state) == 1)
 		{
 			// 2 then 3 then 1 then open 2 then open 3.
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 1); //close 2
-			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, 1); //close 3
-			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, 1); //close 1
-			HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, 0); //close 2
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 2, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000); // Adjust the count value as needed
 
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 0); //open 2
-			HAL_Delay(1000);
-			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, 0); //open 3
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 0); //close 3
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 3, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, 0); //close 1
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 1, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(10);
+
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, 1); //open 2
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 2, 0);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 1); //open 3
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 3, 0);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
 
 			snprintf(buffer, 256,"\nPrecharge Done\n");
 			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
@@ -358,6 +373,15 @@ void process_message(void) {
 
     memset(tempBuffer, 0, sizeof(tempBuffer));
 }
+
+void ManualDelay(volatile uint32_t nCount)
+{
+    while(nCount--)
+    {
+        __asm("nop"); // no operation, prevents optimization
+    }
+}
+
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
     if (huart->Instance == USART2) {
