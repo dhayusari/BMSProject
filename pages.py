@@ -154,15 +154,15 @@ class Voltages(QMainWindow):
             high = self.model.calc_volt['Max_Cell']
             self.high_volt.setText(str(high[1]))
             self.high_loc.setText(str(high[0] + 1))
-            data_high = "MaxCell: " + str(high[1])
+            data_high = "MaxCell:" + str(high[1])
             self.controller.send_data(data_high)
             low = self.model.calc_volt['Min_Cell']
             self.low_volt.setText(str(low[1]))
             self.low_loc.setText(str(low[0] + 1))
-            data_low = "MinCell: " + str(low[1])
+            data_low = "MinCell:" + str(low[1])
             self.controller.send_data(data_low)
             self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
-            data_avg = "AverageVolt: " + str(self.model.calc_volt['Average_Cell'])
+            data_avg = "AverageVolt:" + str(self.model.calc_volt['Average_Cell'])
             self.controller.send_data(data_avg)
     
     def set_button(self):
@@ -421,11 +421,13 @@ class Routines(QWidget):
     
     def produce_dtc(self, state):
         if state:
-            for i in reversed(range(self.dtc_layout.count())): 
-                self.dtc_layout.itemAt(i).widget().setParent(None)
-            for code in self.model.dtc.keys():
+            # Remove all existing widgets in dtc_layout
+            for i in reversed(range(self.dtc_layout.count())):
+                widget = self.dtc_layout.itemAt(i).widget()
+                if widget is not None:
+                    widget.deleteLater()  # Properly delete the widget
+            # Add new DTC widgets
+            for code, desc in self.model.dtc.items():
                 code_label = QLabel(text=code)
-                desc = self.model.dtc[code]
                 dtc_widget = DTC(code_label, desc)
-
                 self.dtc_layout.addWidget(dtc_widget)
