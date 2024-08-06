@@ -34,7 +34,7 @@ class Data(QObject):
     updateVoltages = pyqtSignal(bool)
     updateTemps = pyqtSignal(bool)
     pwmChanged = pyqtSignal(bool)
-    updateDTC = pyqtSignal(str, int)
+    updateDTC = pyqtSignal(int)
     updatePot = pyqtSignal(int, float)
 
     def __init__(self):
@@ -184,12 +184,13 @@ class Data(QObject):
                     desc = "HVIL Circuit Low"
                 elif code == "P29FF":
                     desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
-                
                 self.dtc[str(code)] = desc
+                self.updateDTC.emit(1)
         else:
             del self.dtc[code]
+            self.updateDTC.emit(1)
         
-        self.updateDTC.emit(1)
+
 
 class Controller:
     def __init__(self, model):
@@ -238,8 +239,8 @@ class Controller:
                 self.handle_change_coolant(temp_num, temp_value)
         if dtc_match:
             for match in dtc_match:
-                code = match.group(1)
-                if match.group(2) == "Mature":
+                code = match[0]
+                if match[1] == "Mature":
                     self.model.update_dtc(code, 1)
                 else:
                     self.model.update_dtc(code, 0)
