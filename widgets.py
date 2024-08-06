@@ -6,8 +6,9 @@ class DTC(QWidget):
     def __init__(self, code, desc):
         super().__init__()
         layout = QGridLayout()
-        self.label = QLabel(text=code)
-        self.desc = QLabel(text=desc)
+        
+        self.label = QLabel(str(code))
+        self.desc = QLabel(str(desc))
 
         layout.addWidget(self.label, 0, 0)
         layout.addWidget(self.desc, 0, 1)
