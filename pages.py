@@ -151,19 +151,27 @@ class Voltages(QMainWindow):
     
     def update_voltages(self, update):
         if update:
+            curr_max = float(self.high_volt.text())
             high = self.model.calc_volt['Max_Cell']
-            self.high_volt.setText(str(high[1]))
-            self.high_loc.setText(str(high[0] + 1))
-            data_high = "MaxCell:" + str(high[1])
-            self.controller.send_data(data_high)
+            if curr_max != high[1]:
+                self.high_volt.setText(str(high[1]))
+                self.high_loc.setText(str(high[0] + 1))
+                data_high = "MaxCell:" + str(high[1])
+                self.controller.send_data(data_high)
+
+            curr_min = float(self.low_volt.text())
             low = self.model.calc_volt['Min_Cell']
-            self.low_volt.setText(str(low[1]))
-            self.low_loc.setText(str(low[0] + 1))
-            data_low = "MinCell:" + str(low[1])
-            self.controller.send_data(data_low)
-            self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
-            data_avg = "AverageVolt:" + str(self.model.calc_volt['Average_Cell'])
-            self.controller.send_data(data_avg)
+            if curr_min != low[1]:
+                self.low_volt.setText(str(low[1]))
+                self.low_loc.setText(str(low[0] + 1))
+                data_low = "MinCell:" + str(low[1])
+                self.controller.send_data(data_low)
+
+            curr_avg= float(self.avg_volt.text())
+            if curr_avg != self.model.calc_volt['Average_Cell']:
+                self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
+                data_avg = "AverageVolt:" + str(self.model.calc_volt['Average_Cell'])
+                self.controller.send_data(data_avg)
     
     def set_button(self):
         self.start = int(self.start_edit.text())
@@ -398,7 +406,8 @@ class Routines(QWidget):
 
 
     def send_routine(self):
-        data = "Routine:" + self.routine.text()
+        #data = "Routine:" + self.routine.text()
+        data = self.routine.text()
         self.controller.send_data(data)
     
     def send_current_prim(self):
@@ -428,6 +437,5 @@ class Routines(QWidget):
                     widget.deleteLater()  # Properly delete the widget
             # Add new DTC widgets
             for code, desc in self.model.dtc.items():
-                code_label = QLabel(text=code)
-                dtc_widget = DTC(code_label, desc)
+                dtc_widget = DTC(code, desc)
                 self.dtc_layout.addWidget(dtc_widget)
