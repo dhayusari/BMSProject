@@ -9,7 +9,7 @@ from widgets import TempModule, Relay, SpinBox
 class Voltages(QMainWindow):
     def __init__(self, controller, model):
         super().__init__()
-        self.setWindowTitle("Voltages")
+        self.setWindowTitle("Temperatures")
         self.controller = controller
         self.model = model
         self.is_changing_input = False
@@ -18,14 +18,14 @@ class Voltages(QMainWindow):
         self.volt = 0
         self.scroll = QScrollArea()
         self.widget = QWidget()
-
+        
         # main layout
         layout = QVBoxLayout()
 
-        # inputs for cell voltages
+        # Inputs for cell voltages
         layout1 = QGridLayout()
 
-        # setting all voltages
+        # Setting all voltages
         self.label = QLabel("Set All Voltages")
         self.volt_edit = QLineEdit()
         self.on_btn = QPushButton("Off")
@@ -65,7 +65,7 @@ class Voltages(QMainWindow):
         self.error_range_lbl = QLabel(" ")
         layout1.addWidget(self.error_range_lbl, 6, 0)
 
-        # module option
+        # Module option
         self.input_label = QLabel("Choose Input")
         self.pot_btn = QPushButton("Potentiometer")
         self.pot_btn.setCheckable(True)
@@ -80,9 +80,7 @@ class Voltages(QMainWindow):
 
         self.label4 = QLabel("Choose Module:")
         self.module = QComboBox()
-        self.module.addItems(
-            [str(i) for i in range(1, 26)]
-        )
+        self.module.addItems([str(i) for i in range(1, 26)])
         layout1.addWidget(self.label4, 8, 0)
         layout1.addWidget(self.module, 8, 1)
 
@@ -106,7 +104,7 @@ class Voltages(QMainWindow):
         self.high_volt.setReadOnly(True)
         self.high_loc_lbl = QLabel("Cell Location")
         self.high_loc = QLineEdit(str(max_cell[0]))
-        self.high_loc.setReadOnly(True)
+        self.high_volt.setReadOnly(True)
 
         min_cell = self.model.calc_volt['Min_Cell']
         self.low_lbl = QLabel("Lowest Cell Voltage")
@@ -114,7 +112,7 @@ class Voltages(QMainWindow):
         self.low_volt.setReadOnly(True)
         self.low_loc_lbl = QLabel("Cell Location")
         self.low_loc = QLineEdit(str(min_cell[0]))
-        self.low_loc.setReadOnly(True)
+        self.low_volt.setReadOnly(True)
 
         self.avg_lbl = QLabel("Average Cell Voltage")
         self.avg_volt = QLineEdit(str(sum(self.model.voltages) / len(self.model.voltages)))
@@ -147,7 +145,7 @@ class Voltages(QMainWindow):
 
         self.controller.model.updateVoltages.connect(self.update_voltages)
         self.controller.model.updatePot.connect(self.update_pot)
-
+    
     def update_voltages(self, update):
         if update:
             high = self.model.calc_volt['Max_Cell']
@@ -163,7 +161,7 @@ class Voltages(QMainWindow):
             self.avg_volt.setText(str(self.model.calc_volt['Average_Cell']))
             data_avg = "AverageVolt: " + str(self.model.calc_volt['Average_Cell'])
             self.controller.send_data(data_avg)
-
+    
     def set_button(self):
         self.start = int(self.start_edit.text())
         self.end = int(self.end_edit.text())
@@ -174,12 +172,12 @@ class Voltages(QMainWindow):
         else:
             self.error_range_lbl.setText(" ")
             self.controller.handle_set_voltage_range(self.start, self.end, float(self.volt_edit.text()))
-
+    
     def module_voltage(self):
         index = self.module.currentIndex() + 1
         voltage = self.model.module[str(index)]
         self.module_volt.setText(str(voltage))
-
+    
     def change_input(self, checked):
         if self.is_changing_input:
             return
@@ -187,30 +185,22 @@ class Voltages(QMainWindow):
         print("change_input called, checked:", checked)
 
         if checked:
-            self.laptop_btn.blockSignals(True)
             self.laptop_btn.setChecked(False)
-            self.laptop_btn.blockSignals(False)
             for i, val in enumerate(self.model.pot):
                 print(f"Setting voltage for cell {i} to {val}")
                 self.controller.handle_change_voltage(i, val)
-
+        
         self.is_changing_input = False
-
+    
     def update_pot(self, id, val):
-        self.spin_box = self.scroll.findChild(SpinBox, f'spin_box_{id}')
-        self.spin_box.setValue(val)
+        if self.pot_btn.isChecked():
+            self.controller.handle_set_pot(id, val)
+            self.update_voltages(True)
 
-    def stop_read(self):
-        if self.is_changing_input:
-            return
-        self.is_changing_input = True
-        print("stop_read called")
-        if self.laptop_btn.isChecked():
-            self.pot_btn.blockSignals(True)
+    def stop_read(self, checked):
+        if checked:
             self.pot_btn.setChecked(False)
-            self.pot_btn.blockSignals(False)
-        self.is_changing_input = False
-
+            self.controller.handle_set_voltage_range(0, 200, 0)
 
 
 class Temperatures(QMainWindow):
