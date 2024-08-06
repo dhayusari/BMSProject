@@ -194,6 +194,7 @@ class Controller:
         self.worker = Worker(self.serial_port)
         self.worker.data_received.connect(self.read_data)
         self.worker.start()
+        self.mutex = QMutex()
 
     def __del__(self):
         self.worker.stop()
@@ -213,7 +214,7 @@ class Controller:
         pattern1 = r"pot([\d.]+):\s*([\d.]+)"
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
         pattern3 = r"DTC\s*([\w\d]+)\s(Demature|Mature)"
-        pattern4 = r"PWM: ([\d])"
+        pattern4 = r"PWM\s(Connected|Disconnected)"
         pot_match = re.findall(pattern1, data)
         temp_match = re.findall(pattern2, data)
         dtc_match = re.findall(pattern3, data)
@@ -239,8 +240,11 @@ class Controller:
                 else:
                     self.model.update_dtc(code, 0)
         if pwm_match:
-            self.model.update_pwm(int(pwm_match.group(1)))
-    
+            if pwm_match.group(1) == "Connected":
+                self.model.change_pwm(1)
+            if pwm_match.group(1) == "Disconnected":
+                self.model.change_pwm(0)
+                    
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
         # for i in range(int(start) - 1, int(end), 1):
