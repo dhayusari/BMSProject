@@ -412,7 +412,7 @@ class Routines(QWidget):
             layout = QGridLayout()
             for code in self.model.dtc.keys():
                 code_label = QLabel(text=code)
-                desc = self.model.dtc[code]
+                desc = QLineEdit(text =self.model.dtc[code])
                 layout.addWidget(code_label, 0, 0)
                 layout.addWidget(desc, 0, 1)
             self.layout.addLayout(layout)
