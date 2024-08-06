@@ -252,10 +252,16 @@ class Controller:
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
         pattern3 = r"DTC\s*([\w\d]+)\s(Demature|Mature)"
         pattern4 = r"PWM\s(Connected|Disconnected)"
+        pattern5 = r"Duty\s+Cycle:*(\d+)"
+        pattern6 = r"Freq\s+:*(\d+)"
+
         pot_match = re.findall(pattern1, data)
         temp_match = re.findall(pattern2, data)
         dtc_match = re.findall(pattern3, data)
         pwm_match = re.search(pattern4, data)
+
+        duty_match = re.search(pattern5, data)
+        freq_match = re.search(pattern6, data)
 
         if pot_match:
             for match in pot_match:
@@ -281,6 +287,8 @@ class Controller:
                 self.model.change_pwm(1)
             if pwm_match.group(1) == "Disconnected":
                 self.model.change_pwm(0)
+        if duty_match:
+            
 
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
