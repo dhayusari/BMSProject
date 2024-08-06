@@ -225,7 +225,7 @@ class Controller:
             # print("\npattern1 matched. \n")
                 cell_num = int(match[0])
                 cell_value = float(match[1])
-                self.handle_set_pot(cell_num, cell_value)
+                self.handle_set_pot(cell_num - 1, cell_value)
         if temp_match:
             for match in temp_match:
             #print("\npattern2 matched. \n")
@@ -244,7 +244,7 @@ class Controller:
                 self.model.change_pwm(1)
             if pwm_match.group(1) == "Disconnected":
                 self.model.change_pwm(0)
-                    
+
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
         # for i in range(int(start) - 1, int(end), 1):
