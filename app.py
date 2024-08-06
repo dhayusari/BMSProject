@@ -44,16 +44,16 @@ class Data(QObject):
         self.module = {}
         self.calculate_module()
         self.calc_volt = {
-            'Min_Cell': 0,
-            'Max_Cell': 0,
+            'Min_Cell': [0, 0],
+            'Max_Cell': [0,0],
             'Average_Cell': 0,
             'Highest_Module_Volt': [0,0],
             'Lowest_Module_Volt': [0,0]
         }
         self.temps = [0] * 50
         self.calc_temps = {
-            'Min_Temp': 0,
-            'Max_Temp': 0,
+            'Min_Temp': [0,0],
+            'Max_Temp': [0,0],
             'Average_Temp': 0
         }
         self.relays = [0] * 5 #initially open
@@ -193,27 +193,38 @@ class Data(QObject):
 
 
 class Controller:
-    def __init__(self, model):
+    def _init_(self, model):
         self.model = model
         self.serial_port = serial.Serial('com11', 115200, timeout=1)
         self.worker = Worker(self.serial_port)
         self.worker.data_received.connect(self.read_data)
         self.worker.start()
         self.mutex = QMutex()
+        self.queue = QQueue()
+        self.timer = QTimer()
+        self.timer.setInterval(50)  # Set an appropriate interval (in milliseconds)
+        self.timer.timeout.connect(self.process_queue)
+        self.timer.start()
 
-    def __del__(self):
+    def _del_(self):
         self.worker.stop()
         print("Worker has stopped")
         self.serial_port.close()
 
     def send_data(self, data):
-        print("Data being sent: ", data)
-        self.mutex.lock()  # Lock the mutex before sending data
-        try:
-            self.serial_port.write((data + '\n').encode('utf-8'))
-        finally:
-            self.mutex.unlock()  # Unlock the mutex after data is sent
-    
+        print("Queueing data: ", data)
+        self.queue.enqueue(data)
+
+    def process_queue(self):
+        if not self.queue.isEmpty():
+            data = self.queue.dequeue()
+            print("Data being sent: ", data)
+            self.mutex.lock()
+            try:
+                self.serial_port.write((data + '\n').encode('utf-8'))
+            finally:
+                self.mutex.unlock()
+
     def read_data(self, data):
         print("Reading data: ", data)
         pattern1 = r"pot([\d.]+):\s*([\d.]+)"
