@@ -34,7 +34,7 @@ class Data(QObject):
     updateVoltages = pyqtSignal(bool)
     updateTemps = pyqtSignal(bool)
     pwmChanged = pyqtSignal(bool)
-    updateDTC = pyqtSignal(str, int)
+    updateDTC = pyqtSignal(int)
     updatePot = pyqtSignal(int, float)
 
     def __init__(self):
@@ -156,36 +156,42 @@ class Data(QObject):
 
     def update_dtc(self, code, condition):
         if condition:
-            desc = ""
-            if code == "P0DE7":
-                desc = "Max Cell Voltage >= 4.25 V"
-            elif code == "P1C01":
-                desc = "Max Cell Voltage >= 4.35 V"
-            elif code == "P0DE6":
-                desc = "Min Cell Voltage <= 2.8 V"
-            elif code == "P1C00":
-                desc = "Min Cell Voltage <= 1.7 V"
-            elif code == "P1A9B":
-                desc = "Max Module Temp >= 58 C"
-            elif code == "P0A7E":
-                desc = "Max Module Temp >= 65 C"
-            elif code == "P1A9A":
-                desc = "MinTModule Temp <= -37"
-            elif code == "P0CA7":
-                desc = "HV Current Primary >= 1350 A, HV Current Primary FA is 1 and HV Current Secondary >= 1350 A, or HV Current Primary <= -1350 A"
-            elif code == "P0A0A":
-                desc = "HVIL circuit open"
-            elif code == "P0A0B":
-                desc = "HVIL Performance Low"
-            elif code == "P0A0C":
-                desc = "HVIL Circuit Low"
-            elif code == "P29FF":
-                desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
-            self.dtc[str(code)] = desc
+            if str(code) in self.dtc.keys():
+                print("Code is already in dictionary")
+                pass
+            else:
+                desc = ""
+                if code == "P0DE7":
+                    desc = "Max Cell Voltage >= 4.25 V"
+                elif code == "P1C01":
+                    desc = "Max Cell Voltage >= 4.35 V"
+                elif code == "P0DE6":
+                    desc = "Min Cell Voltage <= 2.8 V"
+                elif code == "P1C00":
+                    desc = "Min Cell Voltage <= 1.7 V"
+                elif code == "P1A9B":
+                    desc = "Max Module Temp >= 58 C"
+                elif code == "P0A7E":
+                    desc = "Max Module Temp >= 65 C"
+                elif code == "P1A9A":
+                    desc = "MinTModule Temp <= -37"
+                elif code == "P0CA7":
+                    desc = "HV Current Primary >= 1350 A, HV Current Primary FA is 1 and HV Current Secondary >= 1350 A, or HV Current Primary <= -1350 A"
+                elif code == "P0A0A":
+                    desc = "HVIL circuit open"
+                elif code == "P0A0B":
+                    desc = "HVIL Performance Low"
+                elif code == "P0A0C":
+                    desc = "HVIL Circuit Low"
+                elif code == "P29FF":
+                    desc = "Thermal Runway: Min Cell is < 2.1 V and difference between Temps are either 2 C or 15 C"
+                self.dtc[str(code)] = desc
+                self.updateDTC.emit(1)
         else:
             del self.dtc[code]
+            self.updateDTC.emit(1)
         
-        self.updateDTC.emit(1)
+
 
 class Controller:
     def __init__(self, model):
@@ -234,8 +240,8 @@ class Controller:
                 self.handle_change_coolant(temp_num, temp_value)
         if dtc_match:
             for match in dtc_match:
-                code = match.group(1)
-                if match.group(2) == "Mature":
+                code = match[0]
+                if match[1] == "Mature":
                     self.model.update_dtc(code, 1)
                 else:
                     self.model.update_dtc(code, 0)
