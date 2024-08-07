@@ -88,7 +88,7 @@ class TempModule(QWidget):
         #self.temp2_label = QLabel(temp2_name)
 
         self.temp = QDoubleSpinBox()
-        self.temp.setRange(0, 150)
+        self.temp.setRange(-100, 150)
         self.temp.setSingleStep(1.0)
 
         self.temp.setValue(temp)
