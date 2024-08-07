@@ -246,22 +246,22 @@ class Data(QObject):
                 del self.dtc[code]
                 self.updateDTC.emit(1)
         
-
 class Controller:
     def __init__(self, model):
         self.model = model
-        self.serial_port = serial.Serial('com11', 9600, timeout=1)
-        self.worker = Worker(self.serial_port)
-        self.worker.data_received.connect(self.read_data)
-        self.worker.start()
+        # self.serial_port = serial.Serial('com11', 9600, timeout=1)
+        # self.worker = Worker(self.serial_port)
+        # self.worker.data_received.connect(self.read_data)
+        # self.worker.start()
 
     def __del__(self):
-        self.worker.stop()
+        # self.worker.stop()
         print("Worker has stopped")
-        self.serial_port.close()
+        # self.serial_port.close()
 
     def send_data(self, data):
-        self.worker.enqueue_data(data)
+        print("Sending data!")
+        # self.worker.enqueue_data(data)
 
     def read_data(self, data):
         print("Reading data: ", data)

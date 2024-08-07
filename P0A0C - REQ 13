@@ -1,0 +1,46 @@
+void P0A0C (void)
+{
+	int P0A0C_condition_met = 0;
+
+		static uint32_t start_time;
+		static uint8_t P0A0C_flag = 0;
+		char buffer[100];
+
+		if(duty_cycle == 0)
+		{
+			P0A0C_condition_met = 1;
+		}
+
+			if(P0A0C_condition_met){
+				if(!P0A0C_flag){
+					//first time entering the condition.
+					start_time = HAL_GetTick();
+					P0A0C_flag = 1;
+					sprintf(buffer, "P0A0C condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
+					HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+				}else{
+
+				     uint32_t current_time = HAL_GetTick();
+					 float elapsed_time = (float)(current_time - start_time) / 1000.0;
+
+				     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
+					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+					 if(elapsed_time >= 0.5){
+						 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A0C\n", 6, 100);
+					 }
+				}
+			}
+			else{
+					int all_cells_below_threshold = 1;
+						if(duty_cycle == 50){
+							all_cells_below_threshold = 0;
+						}
+					if(all_cells_below_threshold){
+						P0A0C_flag = 0;
+			            sprintf(buffer, "All cells below threshold, P0A0C reset.\n");
+			            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+					}
+				}
+}
+
