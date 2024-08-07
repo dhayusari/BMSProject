@@ -304,8 +304,7 @@ class Controller:
                 self.model.change_pwm(1)
             if pwm_match.group(1) == "Disconnected":
                 self.model.change_pwm(0)
-        else:
-            self.model.change_pwm(0)
+    
         if duty_match:
             self.model.pwm_desc['Duty_Cycle'] = duty_match.group(1)
         if freq_match:

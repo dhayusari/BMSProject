@@ -1,4 +1,5 @@
 import sys
+import time
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
@@ -437,6 +438,7 @@ class Routines(QWidget):
             self.duty_edit.setText(str(duty))
             freq = self.model.pwm_desc['Frequency']
             self.freq_edit.setText(str(freq))
+            time.sleep(1)
         else:
             self.pwm_edit.setText("Disconnected")
             self.freq_edit.setText("0")
