@@ -149,12 +149,11 @@ class TempModule(QWidget):
 #             self.temp2_btn.setText("Off")
     
     def temp_changed(self):
-        if self.temp.value() > 0:
+        if self.temp.value():
             self.temp_btn.setText("On")
             new_temp = float(self.temp.text())
             self.controller.handle_change_temp(self.temp_num , int(new_temp))
-        else:
-            print("Temp has not been changed")
+        
     
 #     def temp2_changed(self):
 #         self.temp2_btn.setText("On")
