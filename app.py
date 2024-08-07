@@ -249,19 +249,19 @@ class Data(QObject):
 class Controller:
     def __init__(self, model):
         self.model = model
-        # self.serial_port = serial.Serial('com11', 9600, timeout=1)
-        # self.worker = Worker(self.serial_port)
-        # self.worker.data_received.connect(self.read_data)
-        # self.worker.start()
+        self.serial_port = serial.Serial('com11', 9600, timeout=1)
+        self.worker = Worker(self.serial_port)
+        self.worker.data_received.connect(self.read_data)
+        self.worker.start()
 
     def __del__(self):
-        # self.worker.stop()
+        self.worker.stop()
         print("Worker has stopped")
-        # self.serial_port.close()
+        self.serial_port.close()
 
     def send_data(self, data):
         print("Sending data!")
-        # self.worker.enqueue_data(data)
+        self.worker.enqueue_data(data)
 
     def read_data(self, data):
         print("Reading data: ", data)
@@ -269,8 +269,8 @@ class Controller:
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
         pattern3 = r"DTC\s*([\w\d]+)\s(Demature|Mature)"
         pattern4 = r"PWM\s(Connected|Disconnected)"
-        pattern5 = r"Duty\s+Cycle:*(\d+)"
-        pattern6 = r"Freq\s+:*(\d+)"
+        pattern5 = r"Duty\s+Cycle:\s*(\d+)"
+        pattern6 = r"Freq:*\s(\d+)"
 
         pot_match = re.findall(pattern1, data)
         temp_match = re.findall(pattern2, data)
