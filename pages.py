@@ -439,6 +439,8 @@ class Routines(QWidget):
             self.freq_edit.setText(str(freq))
         else:
             self.pwm_edit.setText("Disconnected")
+            self.freq_edit.setText("0")
+            self.duty_edit.setText("0")
     
     def produce_dtc(self, state):
         if state:
