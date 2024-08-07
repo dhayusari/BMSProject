@@ -1,5 +1,6 @@
 # app.py
 import sys
+import time
 import queue
 import logging
 from PyQt6.QtGui import *
@@ -48,6 +49,8 @@ class Worker(QThread):
                 logging.debug(f"Data to send (encoded): {data_to_send}")
                 self.serial_port.write(data_to_send)
                 logging.debug("Data sent succesfully")
+
+                time.sleep(0.1)
             except Exception as e:
                 logging.error(f"Error while processing queue: {e}")
             finally:
