@@ -318,7 +318,7 @@ class Temperatures(QMainWindow):
             low = self.model.calc_temps['Min_Temp']
             self.min_temp.setText(str(low[1]))
             self.min_temp_loc.setText(str(low[0] + 1))
-            data_low = "MinTemp:" +  str(high[1])
+            data_low = "MinTemp:" +  str(low[1])
             self.controller.send_data(data_low)
             self.avg_temp.setText(str(self.model.calc_temps['Average_Temp']))
             data_avg = "AverageTemp:" + str(self.model.calc_temps['Average_Temp'])
