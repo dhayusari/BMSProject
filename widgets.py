@@ -68,6 +68,7 @@ class SpinBox(QWidget):
     def update_voltage(self, cell_num, voltage):
         if cell_num == self.num:
             self.spin_box.setValue(voltage)
+            self.en_button.setChecked(True)
 
 class TempModule(QWidget):
     def __init__(self, num, temp, controller):
@@ -195,8 +196,9 @@ class Relay(QWidget):
         else:
             self.name = QLabel("Bus (-)")
 
-        self.button = QPushButton(text= "Open")
+        self.button = QPushButton(text= "Close")
         self.button.setCheckable(True)
+        self.button.setChecked(True)
 
         if self.model.relays[id - 1]:
             self.button.setText("Close")

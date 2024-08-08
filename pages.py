@@ -51,7 +51,7 @@ class Voltages(QMainWindow):
 
         self.label2 = QLabel("End Range")
         self.end_edit = QLineEdit(alignment=Qt.AlignmentFlag.AlignLeft)
-        self.end_edit.setMaxLength(2)
+        self.end_edit.setMaxLength(3)
         self.end_edit.setValidator(QIntValidator())
         layout1.addWidget(self.label2, 3, 0)
         layout1.addWidget(self.end_edit, 3, 1)

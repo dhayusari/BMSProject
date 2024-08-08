@@ -93,7 +93,7 @@ class Data(QObject):
             'Max_Temp': [0,0],
             'Average_Temp': 0
         }
-        self.relays = [0] * 5 #initially open
+        self.relays = [1, 1, 1, 1, 1] #initially closed
         self.coolant = [0] * 2
         self.pwm = 0
         self.pwm_desc = {
