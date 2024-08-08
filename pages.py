@@ -443,6 +443,7 @@ class Routines(QWidget):
             self.pwm_edit.setText("Disconnected")
             self.freq_edit.setText("0")
             self.duty_edit.setText("0")
+            time.sleep(1)
     
     def produce_dtc(self, state):
         if state:

@@ -271,6 +271,7 @@ class Controller:
         pattern4 = r"PWM\s(Connected|Disconnected)"
         pattern5 = r"Duty\s+Cycle:\s*(\d+)"
         pattern6 = r"Freq:*\s(\d+)"
+        pattern7 = r"Updated\sRelay\s(\d):\s(\d)"
 
         pot_match = re.findall(pattern1, data)
         temp_match = re.findall(pattern2, data)
@@ -279,6 +280,7 @@ class Controller:
 
         duty_match = re.search(pattern5, data)
         freq_match = re.search(pattern6, data)
+        relay_match = re.search(pattern7, data)
 
         if pot_match:
             for match in pot_match:
@@ -309,6 +311,11 @@ class Controller:
             self.model.pwm_desc['Duty_Cycle'] = duty_match.group(1)
         if freq_match:
             self.model.pwm_desc['Frequency'] = freq_match.group(1)
+
+        if relay_match:
+            relay_id = relay_match.group(1)
+            if self.model.relays[relay_id - 1] != relay_match.group(2):
+                self.model.toggle_relay(relay_id)
 
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
