@@ -1,0 +1,209 @@
+void process_message(void) {
+    char* token = strtok(tempBuffer, " ");
+    int index = 0;
+    double value = 0;
+    int relay_num = 0;
+    int relay_state = 0;
+    int pc_state = 0;
+    int buspospackneg, packpospackneg = 0;
+
+
+    while (token != NULL) {
+        if (sscanf(token, "Cell%d:%lf", &index, &value) == 2) {
+            if (index >= 0 && index < MAX_CELLS) {
+                cellVoltages[index] = value;
+
+                snprintf(buffer, 256, "\nUpdated Cell%d: %.2lf\n", index, value);
+                HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            }
+        } else if (sscanf(token, "Temp%d:%lf", &index, &value) == 2) {
+            if (index >= 0 && index < MAX_TEMPS) {
+                tempValues[index] = value;
+                snprintf(buffer, 256, "\nUpdated Temp%d: %.2lf\n", index, value);
+                HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) +1, HAL_MAX_DELAY);
+            }
+        }
+
+		else if (sscanf(token, "Relay%d:%d", &relay_num, &relay_state) == 2) {
+            switch (relay_num) {
+                case 1:
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, relay_state ? 1 : 0);
+                    snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+
+                    if (relay_state = 1){
+                    	buspospackneg == 14;
+                    	packpospackneg == 0;
+                    }else if (relay_state =0){
+                    	buspospackneg == 14;
+                    	packpospackneg == 14;
+                    }
+
+                    if (relay_state == 1){
+                    	if (buspospackneg - packpospackneg >= 14){
+                    		P0AA1_flag = 1;
+                    		sprintf(buffer, "DTC P0AA1 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    	}else if (buspospackneg < 0.98*packpospackneg) {
+                    		P0AA2_flag = 1;
+                    		sprintf(buffer, "DTC P0AA2 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    	}else if (buspospackneg < 0.80*packpospackneg){
+                    		P0AE3_flag = 1;
+                    		sprintf(buffer, "DTC P0AE3 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    	}else {
+                    		P0AA1_flag = 0;
+                    		sprintf(buffer, "DTC P0AA1 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    		P0AA2_flag = 0;
+                    		sprintf(buffer, "DTC P0AA2 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    		P0AE3_flag = 0;
+                    		sprintf(buffer, "DTC P0AE3 Mature\n");
+                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+                    	}
+                    }
+                    break;
+                case 2:
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, relay_state ? 1 : 0);
+                    snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+                    break;
+                case 3:
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, relay_state ? 1 : 0);
+                    snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+                    break;
+                case 4:
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, relay_state ? 1 : 0);
+                    snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+                    break;
+                case 5:
+                    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, relay_state ? 1 : 0);
+                    snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+                    break;
+                default:
+                    snprintf(buffer, 256, "Invalid relay number: %d\n", relay_num);
+                    HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) +1, HAL_MAX_DELAY);
+                    break;
+            }
+        }
+		else if (sscanf(token, "Precharge:%d", &pc_state) == 1)
+		{
+			// 2 then 3 then 1 then open 2 then open 3.
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, 0); //close 2
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 2, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000); // Adjust the count value as needed
+
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 0); //close 3
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 3, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, 0); //close 1
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 1, 1);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(10);
+
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, 1); //open 2
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 2, 0);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+            ManualDelay(1000000);
+            //HAL_Delay(1000);
+			HAL_GPIO_WritePin(GPIOE, GPIO_PIN_2, 1); //open 3
+            snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", 3, 0);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+
+			snprintf(buffer, 256,"\nPrecharge Done\n");
+			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+
+		}
+		else if (sscanf(token, "MinCell:%lf", &value) == 1) {
+		        		min_cell = value;
+		                sprintf(buffer, "Updated min_cell %lf\n", value);
+		                HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "MaxCell:%lf", &value) == 1) {
+		    			max_cell = value;
+		    			sprintf(buffer, "Updated max_cell %lf\n", value);
+		    			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "MinTemp:%lf", &value) == 1) {
+		    			min_temp = value;
+		    			sprintf(buffer, "Updated min_temp %lf\n", value);
+		    			HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "MaxTemp:%lf", &value) == 1) {
+						max_temp = value;
+						sprintf(buffer, "Updated max_temp %lf\n", value);
+						HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
+		            	string = value;
+		            	P1C01_flag = 0;
+		            	P1C00_flag = 0;
+		            	P0A7E_flag = 0;
+		            	P29FF_flag = 0;
+		        		sprintf(buffer, "DTC P1C01 Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        		sprintf(buffer, "DTC P1C00 Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        		sprintf(buffer, "DTC P0A7E Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        		sprintf(buffer, "DTC P29FF Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+
+//		        		sprintf(buffer, "DTC P1C01 Demature, DTC P0A7E Demature, and DTC P1C00 Demature\n");
+//		            	HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
+		        		string = value;
+		        		P0CA7_flag = 0;
+		        		sprintf(buffer, "DTC P0CA7 Demature\n");
+		        		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		        }
+		else if (sscanf(token, "HV_current_Pri:%lf", &value) == 1) {
+				pri_current = value;
+				sprintf(buffer, "Updated HV_current_Pri %lf\n", pri_current);
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		}
+		else if (sscanf(token, "HV_current_Pri_FA:%lf", &value) == 1) {
+				pri_current_fa = value;
+				sprintf(buffer, "Updated HV_current_Pri_FA %lf\n", pri_current_fa);
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		}
+		else if (sscanf(token, "HV_current_Sec:%lf", &value) == 1) {
+				sec_current = value;
+				sprintf(buffer, "Updated HV_current_Sec %lf\n", sec_current);
+				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+		}
+
+//		else if (sscanf(token, "$0314_%lf\n", &value) == 1) {
+//				string = value;
+//				P1C01_flag = 0;
+//				P1C00_flag = 0;
+//				P0A7E_flag = 0;
+//				sprintf(buffer, "P1C01, P0A7E, and P1C00 flag reset manually\n");
+//				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//		}
+//		else if (sscanf(token, "$0321_%lf\n", &value) == 1) {
+//				string = value;
+//				P0CA7_flag = 0;
+//				sprintf(buffer, "P0CA7 demature is set manually\n");
+//				HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
+//		}
+        else {
+            snprintf(buffer, 256, "Failed to parse token: %s\n", token);
+            HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
+        }
+        token = strtok(NULL, " ");
+    }
+
+    memset(tempBuffer, 0, sizeof(tempBuffer));
+}
