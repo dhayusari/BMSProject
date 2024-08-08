@@ -130,6 +130,7 @@ class Data(QObject):
         self.voltageChanged.emit(cell_num, volt)
         self.update_module(cell_num)
         self.update_calc_volt()
+        self.updateVoltages.emit(True)
 
     def set_range_voltage(self, start, end, volt):
         print("Change Voltage Cell Range")
