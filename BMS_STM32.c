@@ -137,7 +137,7 @@ void ManualDelay(volatile uint32_t nCount);
 char PWMbuf[50];
 char PWMbuf1[50];
 char PWMbuf2[50];
-char PWMbuf3[50];
+//char PWMbuf3[50];
 
 int PWM_flag = 0;
 
@@ -147,10 +147,6 @@ uint8_t first_capture = 0;
 uint8_t msgSent = 0;
 uint8_t counter = 0;
 int freq = 0, duty_cycle = 0;
-
-
-
-
 
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
@@ -183,17 +179,19 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 duty_cycle = (100 * high_time) / period;
 
 
+
+
                 if((freq >=82 && freq <= 94) && (duty_cycle >= 47 && duty_cycle <= 53))
                 {
                 	snprintf(PWMbuf, 50, "\n\rPWM Connected.\n\r");
                 	PWM_flag = 1;
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
+					 //HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
 
 					 snprintf(PWMbuf1, 50, "\n\rDuty Cycle: %d\n\r", duty_cycle);
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
+					 //HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
 
 					 snprintf(PWMbuf2, 50, "\n\rFreq: %d\n\r", freq);
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
+					 //HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
 
 					 //msgSent = 1;
 
@@ -203,13 +201,13 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
                 	PWM_flag = 0;
 					snprintf(PWMbuf1, 50, "\n\rDuty Cycle: %d\n\r", 0);
 					snprintf(PWMbuf2, 50, "\n\rFreq: %d\n\r", 0);
-                	snprintf(PWMbuf3, 50, "\n\rPWM Disconnected.\n\r");
+                	snprintf(PWMbuf, 50, "\n\rPWM Disconnected.\n\r");
                 	//snprintf(PWMbuf,50 , "\r\n PWM SIGNAL DOES NOT MATCH. DTC \n\r");
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), 100);
-					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), 100);
-
-
-					HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf3, sizeof(PWMbuf3), 100);
+//					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), 100);
+//					 HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), 100);
+//
+//
+//					HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf3), 100);
 					//msgSent = 1;
                 }
 //                else if(msgSent == 1 && counter > 100)
@@ -233,6 +231,9 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
     }
 }
+
+
+
 
 //uint32_t freq, duty_cycle;
 //uint32_t capture_val;
@@ -853,60 +854,6 @@ void P0CA7(void)
 }
 
 
-//void P0A0C (void)
-//{
-//	int P0A0C_condition_met = 0;
-//
-//		static uint32_t start_time;
-//		static uint8_t P0A0C_flag = 0;
-//		char buffer[100];
-//		static int test_flag = 0;
-//
-//
-//		if(duty_cycle == 0)
-//		{
-//			P0A0C_condition_met = 1;
-//		}
-//
-//			if(P0A0C_condition_met){
-//				test_flag = 1;
-//				if(!P0A0C_flag){
-//					//first time entering the condition.
-//					start_time = HAL_GetTick();
-//					P0A0C_flag = 1;
-//					sprintf(buffer, "P0A0C condition met, Start_time set: %.2f s\n", (float)start_time/1000.0);
-//					HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-//				}else{
-//
-//				     uint32_t current_time = HAL_GetTick();
-//					 float elapsed_time = (float)(current_time - start_time) / 1000.0;
-//
-//				     sprintf(buffer, "Elapsed Time: %.2f seconds\n", elapsed_time);
-//					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-//
-//					 if(elapsed_time >= 0.5){
-//						 sprintf(buffer, "DTC P0A0C Mature\n");
-//						 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-//					 }
-//				}
-//			}
-//			else{
-//					int all_cells_below_threshold = 1;
-//						if(duty_cycle == 50){
-//							all_cells_below_threshold = 0;
-//						}
-//					if(!all_cells_below_threshold){
-//						P0A0C_flag = 0;
-//						if(test_flag == 1)
-//						{
-//
-//							sprintf(buffer, "DTC P0A0C Demature.\n");
-//							test_flag = 0;
-//							HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-//						}
-//					}
-//				}
-//}
 
 void P29FF(void) {
     int P29FF_condition_met = 0;
@@ -1003,20 +950,20 @@ void P0A0B (void)
 					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 					 if(elapsed_time >= 0.5){
-						 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A0B\n", 6, 100);
+						 HAL_UART_Transmit(&huart2, (uint8_t*)"DTC P0A0B Mature\n", 17, 100);
 					 }
 				}
 			}
 			else{
 					int all_cells_below_threshold = 1;
-						if(freq == 88 && duty_cycle == 50){
+						if(freq == 87 && duty_cycle == 49){
 							all_cells_below_threshold = 0;
 						}
-					if(all_cells_below_threshold){
+					if(!all_cells_below_threshold){
 						P0A0B_flag = 0;
 						if(test_flag == 1)
 						{
-							sprintf(buffer, "All cells below threshold, P0A0B reset.\n");
+							sprintf(buffer, "DTC P0A0B Demature.\n");
 							test_flag = 0;
 							HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 						}
@@ -1055,20 +1002,20 @@ void P0A0C (void)
 					 HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
 					 if(elapsed_time >= 0.5){
-						 HAL_UART_Transmit(&huart2, (uint8_t*)"P0A0C\n", 6, 100);
+						 HAL_UART_Transmit(&huart2, (uint8_t*)"DTC P0A0C Mature\n", 17, 100);
 					 }
 				}
 			}
 			else{
 					int all_cells_below_threshold = 1;
-						if(duty_cycle == 50){
+						if(duty_cycle == 49){
 							all_cells_below_threshold = 0;
 						}
-					if(all_cells_below_threshold){
+					if(!all_cells_below_threshold){
 						P0A0C_flag = 0;
 						if(test_flag == 1)
 						{
-							sprintf(buffer, "All cells below threshold, P0A0C reset.\n");
+							sprintf(buffer, "DTC P0A0C Demature.\n");
 							test_flag = 0;
 							HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
 
@@ -1214,6 +1161,9 @@ int main(void)
       P0CA7();
       P29FF();
       P1A9A();
+      P0A0B();
+      P0A0C();
+      P0A0D();
       HAL_Delay(1000);
 
 	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcResultsDMA, adcChannelCount);
@@ -1268,18 +1218,18 @@ int main(void)
 	  HAL_Delay(1000);
 
 	  //PWM transmit:
-//	  if(PWM_flag == 1)
-//	  {
-//		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
-//		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
-//		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
-//	  }
-//	  else
-//	  {
-//		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
-//		  		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
-//			HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf3, sizeof(PWMbuf3), HAL_MAX_DELAY);
-//	  }
+	  if(PWM_flag == 1)
+	  {
+		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
+		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
+	  }
+	  else
+	  {
+		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf1, sizeof(PWMbuf1), HAL_MAX_DELAY);
+		  		  HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf2, sizeof(PWMbuf2), HAL_MAX_DELAY);
+			HAL_UART_Transmit(&huart2, (uint8_t *)PWMbuf, sizeof(PWMbuf), HAL_MAX_DELAY);
+	  }
 
 
 
