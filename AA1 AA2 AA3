@@ -5,7 +5,7 @@ void process_message(void) {
     int relay_num = 0;
     int relay_state = 0;
     int pc_state = 0;
-    int buspospackneg, packpospackneg = 0;
+
 
 
     while (token != NULL) {
@@ -31,15 +31,15 @@ void process_message(void) {
                     snprintf(buffer, 256, "\nUpdated Relay %d: %d\n", relay_num, relay_state);
                     HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer) + 1, HAL_MAX_DELAY);
 
-                    if (relay_state = 1){
+                    if ((relay_state = 1)){
                     	buspospackneg == 14;
                     	packpospackneg == 0;
-                    }else if (relay_state =0){
+                    }else if ((relay_state = 0)){
                     	buspospackneg == 14;
                     	packpospackneg == 14;
                     }
 
-                    if (relay_state == 1){
+                    if ((relay_state == 1)){
                     	if (buspospackneg - packpospackneg >= 14){
                     		P0AA1_flag = 1;
                     		sprintf(buffer, "DTC P0AA1 Mature\n");
@@ -48,19 +48,12 @@ void process_message(void) {
                     		P0AA2_flag = 1;
                     		sprintf(buffer, "DTC P0AA2 Mature\n");
                     		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-                    	}else if (buspospackneg < 0.80*packpospackneg){
-                    		P0AE3_flag = 1;
-                    		sprintf(buffer, "DTC P0AE3 Mature\n");
-                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
                     	}else {
                     		P0AA1_flag = 0;
                     		sprintf(buffer, "DTC P0AA1 Mature\n");
                     		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
                     		P0AA2_flag = 0;
                     		sprintf(buffer, "DTC P0AA2 Mature\n");
-                    		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
-                    		P0AE3_flag = 0;
-                    		sprintf(buffer, "DTC P0AE3 Mature\n");
                     		HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), 100);
                     	}
                     }
