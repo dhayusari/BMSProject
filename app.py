@@ -1,4 +1,5 @@
-# app.py
+#import PyQt6 if needed
+#pip install PyQt6
 import sys
 import time
 import queue
@@ -11,8 +12,10 @@ import re
 from pages import Voltages, Temperatures, Relays, Routines
 
 #set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+# Uncomment logging if debug is needed
+#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 class Worker(QThread):
+    #Class to help with other processes (reading and sending data) without disrupting the UI processes
     data_received = pyqtSignal(str)
     data_ready = pyqtSignal()
 
@@ -27,12 +30,12 @@ class Worker(QThread):
         self.data_ready.connect(self.process_queue)
 
     def enqueue_data(self, data):
-        logging.debug(f"Enqueueing data: {data}")
+        #logging.debug(f"Enqueueing data: {data}")
         self.queue.put(data)
         self.data_ready.emit()
 
     def run(self):
-        logging.debug(f"Worker thread started")
+        #logging.debug(f"Worker thread started")
         self.timer.start(10)  # Process the queue every 10 milliseconds
         while self._running:
             if self.serial_port.in_waiting > 0:
@@ -44,26 +47,27 @@ class Worker(QThread):
             self.mutex.lock()
             try:
                 data = self.queue.get()
-                logging.debug(f"Processing data from queue: {data}")
+                #logging.debug(f"Processing data from queue: {data}")
                 data_to_send = (data + '\n').encode('utf-8')
-                logging.debug(f"Data to send (encoded): {data_to_send}")
+                #logging.debug(f"Data to send (encoded): {data_to_send}")
                 self.serial_port.write(data_to_send)
                 logging.debug("Data sent succesfully")
 
                 time.sleep(0.1)
-            except Exception as e:
-                logging.error(f"Error while processing queue: {e}")
+            # except Exception as e:
+            #     logging.error(f"Error while processing queue: {e}")
             finally:
                 self.mutex.unlock()
 
     def stop(self):
-        logging.debug("Stopping worker thread")
+        #logging.debug("Stopping worker thread")
         self._running = False
         self.timer.stop()
         self.wait()
 
 
 class Data(QObject):
+    #signals to connect between UI components
     voltageChanged = pyqtSignal(int, float)
     tempChanged = pyqtSignal(int, int)
     relayToggled = pyqtSignal(int, bool)
@@ -76,6 +80,7 @@ class Data(QObject):
 
     def __init__(self):
         super().__init__()
+        #Data initilization for all data being sent and received to the microcontroller and display
         self.voltages = [0.0] * 200
         self.pot = [0] * 200
         self.module = {}
@@ -103,13 +108,15 @@ class Data(QObject):
         self.dtc = {}
     
     def calculate_module(self):
+        # Calculates initial voltages for each module
         for i in range(25):
             module = i * 8
             average = sum(self.voltages[module:module+8]) / 8
             self.module[str(module // 8 + 1)] = average
-        print(self.module)
+        #print(self.module)
     
     def update_module(self, cell_num):
+        # Updates the voltage for the module in which a cell is changed
         module = cell_num // 8
         #print("Module ", str(module + 1), " Updated!")
         average = sum(self.voltages[module*8:module*8 + 8]) / 8  # Fixed range
@@ -125,7 +132,8 @@ class Data(QObject):
                 self.calc_volt['Highest_Module_Volt'] = [int(module), volt]  # Fixed assignment
 
     def change_voltage(self, cell_num, volt):
-        print("Changed Cell Voltage:", cell_num + 1)
+        #Changing the voltage at the index (cell_num - 1)
+        #print("Changed Cell Voltage:", cell_num + 1)
         self.voltages[cell_num] = volt
         self.voltageChanged.emit(cell_num, volt)
         self.update_module(cell_num)
@@ -133,16 +141,18 @@ class Data(QObject):
         self.updateVoltages.emit(True)
 
     def set_range_voltage(self, start, end, volt):
-        print("Change Voltage Cell Range")
-        print("Start Range: ", start)
-        print("End Range: ", end)
+        #Changing a range of cells at the same voltage
+        #print("Change Voltage Cell Range")
+        #print("Start Range: ", start)
+        #print("End Range: ", end)
         for i in range(start - 1, end):
-            print("Changed Cell Voltage:", i + 1)
+            #print("Changed Cell Voltage:", i + 1)
             self.voltages[i] = volt
             self.voltageChanged.emit(i, volt)
             self.update_module(i)
 
     def update_calc_volt(self):
+        #Updates the voltages for minimum, maximum, and average volt
         min_val = min(self.voltages)
         min_id = self.voltages.index(min_val)
         curr_min = self.calc_volt['Min_Cell']
@@ -161,19 +171,22 @@ class Data(QObject):
         self.updateVoltages.emit(True)
     
     def change_temp(self, temp_num, temp):
-        print("Changed Temp Number: ", temp_num + 1)
+        #Changes the temp at the index
+        #print("Changed Temp Number: ", temp_num + 1)
         self.temps[temp_num] = temp
         self.tempChanged.emit(temp_num, temp)
         self.update_calc_temp()
     
     def toggle_relay(self, id):
-        print("Relay toggled!")
+        #Toggles the relay based on current state
+        #print("Relay toggled!")
         self.relays[id - 1] = not self.relays[id - 1]
         self.relayToggled.emit(id, self.relays[id - 1])
 
     def change_coolant(self, id, temp):
-        print("Coolant:  ", id)
-        print("Temp: ", temp)
+        #Changes the coolant temp based on input
+        #print("Coolant:  ", id)
+        #print("Temp: ", temp)
         self.coolant[id - 1]= temp
         self.coolantChanged.emit(id)
 
@@ -187,20 +200,21 @@ class Data(QObject):
         self.updatePot.emit(num, volt)
     
     def update_calc_temp(self):
-        #finding min
+        #finding min temp
         min_val = min(self.temps)
         min_id = self.temps.index(min_val)
         self.calc_temps['Min_Temp'] = [min_id, min_val]
-        #finding max
+        #finding max temp
         max_val = max(self.temps)
         max_id = self.temps.index(max_val)
         self.calc_temps['Max_Temp'] = [max_id, max_val]
-        #finding average
+        #finding average temp
         avg_temp = sum(self.temps) / len(self.voltages)
         self.calc_temps['Average_Temp'] = avg_temp
         self.updateTemps.emit(True)
 
     def update_dtc(self, code, condition):
+        #Adds or deletes a DTC to dtc dictionary based on input
         if condition:
             if code in self.dtc.keys():
                 pass
@@ -248,6 +262,7 @@ class Data(QObject):
                 self.updateDTC.emit(1)
         
 class Controller:
+    #Class that interacts with the Data model and Arduino
     def __init__(self, model):
         self.model = model
         self.serial_port = serial.Serial('com11', 9600, timeout=1)
@@ -261,18 +276,20 @@ class Controller:
         self.serial_port.close()
 
     def send_data(self, data):
+        #Sends the data through queue logic
         print("Sending data!")
         self.worker.enqueue_data(data)
 
     def read_data(self, data):
+        #Reads the data based on patterns already established
         print("Reading data: ", data)
         pattern1 = r"pot([\d.]+):\s*([\d.]+)"
         pattern2 = r"Temp([\d.]+):\s*([\d.]+)"
         pattern3 = r"DTC\s*([\w\d]+)\s(Demature|Mature)"
         pattern4 = r"PWM\s(Connected|Disconnected)"
         pattern5 = r"Duty\s+Cycle:\s*(\d+)"
-        pattern6 = r"Freq:*\s(\d+)"
-        pattern7 = r"Updated\sRelay\s(\d):\s(\d)"
+        pattern6 = r"Freq:*\s([\d.]+)"
+        pattern7 = r"Updated\sRelay\s([\d.]):\s([\d.])"
 
         pot_match = re.findall(pattern1, data)
         temp_match = re.findall(pattern2, data)
@@ -312,12 +329,16 @@ class Controller:
             self.model.pwm_desc['Duty_Cycle'] = duty_match.group(1)
         if freq_match:
             self.model.pwm_desc['Frequency'] = freq_match.group(1)
+        
+        #haven't been tested yet. should check if the the current relay is 0 or 1 and then 
+        # if relay_match:
+        #     relay_id = relay_match.group(1)
+        #     curr_state = self.model.relays[relay_id - 1]
+        #     new_state = relay_match.group
+        #     if curr_state != new_state:
+        #         self.model.toggle_relay(relay_id)
 
-        if relay_match:
-            relay_id = relay_match.group(1)
-            if self.model.relays[relay_id - 1] != relay_match.group(2):
-                self.model.toggle_relay(relay_id)
-
+    #Handles function for all changes in the Data class
     def handle_set_voltage_range(self, start, end, volt):
         self.model.set_range_voltage(int(start), int(end), volt)
         # for i in range(int(start) - 1, int(end), 1):
@@ -349,6 +370,7 @@ class Controller:
         self.model.change_coolant(id, value)
 
 class MainWindow(QMainWindow):
+    #Main window for application
     def __init__(self, controller, model):
         super().__init__()
         self.counter = 0
@@ -361,15 +383,9 @@ class MainWindow(QMainWindow):
         self.tabs = Tabs(self, self.controller, self.model)
         self.setCentralWidget(self.tabs)
 
-        self.timer = QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.recurring_timer)
-        self.timer.start()
-    
-    def recurring_timer(self):
-        self.counter += 1
 
 class Tabs(QWidget):
+    #Class for the different pages in the GUI, all the pages are located in pages.py
     def __init__(self, parent, controller, model):
         super(QWidget, self).__init__(parent)
         self.controller = controller

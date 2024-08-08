@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QMainWindow, QScrollArea, QLabel, QWidget, QComboBox
 from widgets import TempModule, Relay, SpinBox, DTC
 
 class Voltages(QMainWindow):
+    #Window for 200 cell voltages
     def __init__(self, controller, model):
         super().__init__()
         self.setWindowTitle("Temperatures")
@@ -89,9 +90,7 @@ class Voltages(QMainWindow):
         layout1.addWidget(self.module, 8, 1)
 
         self.label5 = QLabel("Module Voltage:")
-        print("module dict: ", self.model.module['1'])
         module = self.model.module['1']
-        print("module dict: ", module)
         self.module_volt = QLineEdit(str(module))
         self.module_volt.setReadOnly(True)
         self.module.currentIndexChanged.connect(self.module_voltage)
@@ -147,10 +146,12 @@ class Voltages(QMainWindow):
 
         self.setCentralWidget(self.scroll)
 
+        #Connecting model signals to UI
         self.controller.model.updateVoltages.connect(self.update_voltages)
         self.controller.model.updatePot.connect(self.update_pot)
     
     def update_voltages(self, update):
+        #updates the UI for min, max, and average cell voltages
         if update:
             curr_max = float(self.high_volt.text())
             high = self.model.calc_volt['Max_Cell']
@@ -175,6 +176,7 @@ class Voltages(QMainWindow):
                 self.controller.send_data(data_avg)
     
     def set_button(self):
+        #Function that sets the voltages for changing a range of voltages
         self.start = int(self.start_edit.text())
         self.end = int(self.end_edit.text())
         if self.end <= self.start:
@@ -186,42 +188,48 @@ class Voltages(QMainWindow):
             self.controller.handle_set_voltage_range(self.start, self.end, float(self.volt_edit.text()))
     
     def set_all(self):
+        #Sets all the voltages for all 200 cells
         volt = float(self.all_volt_edit.text())
         if volt:
             self.on_btn.setChecked(True)
             self.controller.handle_set_voltage_range(0, 200, volt)
     
     def module_voltage(self):
+        #Updates the voltage of the module
         index = self.module.currentIndex() + 1
         voltage = self.model.module[str(index)]
         self.module_volt.setText(str(voltage))
     
     def change_input(self, checked):
+        #Changes input from laptop to potentiometer
         if self.is_changing_input:
             return
         self.is_changing_input = True
-        print("change_input called, checked:", checked)
+        #print("change_input called, checked:", checked)
 
         if checked:
             self.laptop_btn.setChecked(False)
             for i, val in enumerate(self.model.pot):
-                print(f"Setting voltage for cell {i} to {val}")
+                #print(f"Setting voltage for cell {i} to {val}")
                 self.controller.handle_change_voltage(i, val)
         
         self.is_changing_input = False
     
     def update_pot(self, id, val):
+        #Updates cell voltages based on potentiometer input
         if self.pot_btn.isChecked():
             self.controller.handle_set_voltage_range(id*8,id*8+8, val)
             self.update_voltages(True)
 
     def stop_read(self, checked):
+        #Changes the voltages to laptop voltages, default is 0 V
         if checked:
             self.pot_btn.setChecked(False)
             self.controller.handle_set_voltage_range(0, 200, 0)
 
 
 class Temperatures(QMainWindow):
+    #Window for all 50 temp values with 2 coolant temperatures
     def __init__(self, controller, model):
         super().__init__()
         self.setWindowTitle("Temperatures")
@@ -302,6 +310,7 @@ class Temperatures(QMainWindow):
         self.controller.model.updateTemps.connect(self.update_temp)
     
     def update_coolant(self, id):
+        #Updates the coolant UI whenever there's a change to coolant values
         if id == 1:
             temp = self.model.coolant[0]
             self.temp1.setText(str(temp))
@@ -310,6 +319,7 @@ class Temperatures(QMainWindow):
             self.temp2.setText(str(temp))
     
     def update_temp(self, update):
+        #Updates the temperature whenever the calculations of temp changes
         if update:
             high = self.model.calc_temps['Max_Temp']
             self.max_temp.setText(str(high[1]))
@@ -326,6 +336,7 @@ class Temperatures(QMainWindow):
             self.controller.send_data(data_avg)
 
 class Relays(QWidget):
+    #Window to show 5 relay control
     def __init__(self, controller, model):
         super().__init__()
         self.setWindowTitle("Relay Controls")
@@ -347,6 +358,7 @@ class Relays(QWidget):
         self.setLayout(layout)
 
 class Routines(QWidget):
+    #Window of DTC displays, PWM, and Routines to give
     def __init__(self,  controller, model):
         super().__init__()
         self.controller = controller
@@ -415,23 +427,28 @@ class Routines(QWidget):
 
 
     def send_routine(self):
+        #Sends routine
         #data = "Routine:" + self.routine.text()
         data = self.routine.text()
         self.controller.send_data(data)
     
     def send_current_prim(self):
+        #Sends HV current Pri value
         data = "HV_current_Pri:" + self.hv_cur_pri.text()
         self.controller.send_data(data)
     
     def send_current_sec(self):
+        #Sends HV current sec value
         data = "HV_current_Sec:" + self.hv_cur_sec.text()
         self.controller.send_data(data)
 
     def send_current_fa(self):
+        #Sends HV Current Pri FA
         data = "HV_current_Pri_FA:" + self.hv_cur_fa.text()
         self.controller.send_data(data)
 
     def update_pwm(self, state):
+        #updates the PWM UI whenever there's a change in PWM data
         if state:
             self.pwm_edit.setText("Connected")
             duty = self.model.pwm_desc['Duty_Cycle']
@@ -446,6 +463,7 @@ class Routines(QWidget):
             time.sleep(1)
     
     def produce_dtc(self, state):
+        #Displays the DTC and descriptions
         if state:
             # Remove all existing widgets in dtc_layout
             for i in reversed(range(self.dtc_layout.count())):
